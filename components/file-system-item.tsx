@@ -41,6 +41,9 @@ export function FileSystemItemComponent({
   setClickTimeouts,
 }: FileSystemItemProps) {
   const renameInputRef = useRef<HTMLInputElement>(null)
+  const itemRef = useRef<HTMLDivElement>(null)
+  const quickAddRef = useRef<HTMLDivElement>(null)
+  const plusButtonRef = useRef<HTMLButtonElement>(null)
   const [renameValue, setRenameValue] = useState("")
 
   useEffect(() => {
@@ -50,6 +53,44 @@ export function FileSystemItemComponent({
       renameInputRef.current.select()
     }
   }, [renamingId, item.id, item.name])
+
+  // Handle click outside to cancel rename
+  useEffect(() => {
+    if (renamingId === item.id) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (itemRef.current && !itemRef.current.contains(event.target as Node)) {
+          handleRenameCancel()
+        }
+      }
+
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside)
+      }
+    }
+  }, [renamingId, item.id])
+
+  // Handle click outside to cancel quick add
+  useEffect(() => {
+    if (showQuickAdd === item.id) {
+      const handleClickOutside = (event: MouseEvent) => {
+        const target = event.target as Node
+        if (
+          quickAddRef.current &&
+          !quickAddRef.current.contains(target) &&
+          plusButtonRef.current &&
+          !plusButtonRef.current.contains(target)
+        ) {
+          setShowQuickAdd(null)
+        }
+      }
+
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside)
+      }
+    }
+  }, [showQuickAdd, item.id, setShowQuickAdd])
 
   const handleItemClick = () => {
     if (clickTimeouts.has(item.id)) {
@@ -100,7 +141,7 @@ export function FileSystemItemComponent({
 
   const handleRenameCommit = () => {
     if (renameValue.trim() && renameValue.trim() !== item.name) {
-      const success = onRename(item.id, renameValue)
+      const success = onRename(item.id, renameValue.trim())
       if (success) {
         setRenamingId(null)
       }
@@ -128,6 +169,7 @@ export function FileSystemItemComponent({
   return (
     <div className="relative">
       <div
+        ref={itemRef}
         className="group flex items-center gap-2.5 px-3 py-2 hover:bg-accent/40 rounded-lg transition-all duration-150 min-h-[40px] cursor-pointer"
         style={{ paddingLeft: `${Math.min(level * 20, 60) + 12}px` }}
         onClick={() => {
@@ -174,7 +216,6 @@ export function FileSystemItemComponent({
             type="text"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
-            onBlur={handleRenameCommit}
             onKeyDown={(e) => {
               e.stopPropagation()
               if (e.key === "Enter") {
@@ -195,6 +236,7 @@ export function FileSystemItemComponent({
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
           {item.type === "folder" && (
             <button
+              ref={plusButtonRef}
               onClick={(e) => {
                 e.stopPropagation()
                 setShowQuickAdd(showQuickAdd === item.id ? null : item.id)
@@ -206,34 +248,35 @@ export function FileSystemItemComponent({
             </button>
           )}
           {item.id !== "root" && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onDuplicate(item.id)
-              }}
-              className="p-1 hover:bg-green-500/10 rounded transition-colors"
-              title="Duplicate item"
-            >
-              <Copy className="w-3.5 h-3.5 text-green-500/70" />
-            </button>
-          )}
-          {item.id !== "root" && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete(item.id)
-              }}
-              className="p-1 hover:bg-red-500/10 rounded transition-colors"
-              title="Delete item"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-red-500/70" />
-            </button>
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDuplicate(item.id)
+                }}
+                className="p-1 hover:bg-green-500/10 rounded transition-colors"
+                title="Duplicate item"
+              >
+                <Copy className="w-3.5 h-3.5 text-green-500/70" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(item.id)
+                }}
+                className="p-1 hover:bg-red-500/10 rounded transition-colors"
+                title="Delete item"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-500/70" />
+              </button>
+            </>
           )}
         </div>
       </div>
 
       {showQuickAdd === item.id && (
         <div
+          ref={quickAddRef}
           className="content-area p-3 rounded-lg mx-3 mb-2"
           style={{ marginLeft: `${Math.min(level * 20, 60) + 36}px` }}
           data-quick-add={item.id}

@@ -162,47 +162,43 @@ export default function FolderBuilder() {
             </CardHeader>
             <CardContent className="flex-1 flex flex-col p-0 border-t border-border/30">
               <div className="flex-1 p-4">
-                {hasContent ? (
-                  <div className="space-y-1">
-                    {memoizedFileSystem.map((item) => (
-                      <FileSystemItemComponent
-                        key={`${item.id}-${item.name}-${item.children?.length || 0}`}
-                        item={item}
-                        onToggleExpanded={handleToggleExpanded}
-                        onRename={handleRename}
-                        onDelete={handleDelete}
-                        onDuplicate={handleDuplicate}
-                        onAddItem={handleAddItem}
-                        onItemClick={handleItemClick}
-                        onItemDoubleClick={(itemId, itemName) => {
-                          setRenamingId(itemId)
-                          setRenameValue(itemName)
-                        }}
-                        showQuickAdd={showQuickAdd}
-                        setShowQuickAdd={setShowQuickAdd}
-                        renamingId={renamingId}
-                        setRenamingId={setRenamingId}
-                        renameValue={renameValue}
-                        setRenameValue={setRenameValue}
-                        clickTimeouts={clickTimeouts}
-                        setClickTimeouts={setClickTimeouts}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/30 flex items-center justify-center">
-                      <Folder className="w-8 h-8 text-muted-foreground/50" />
+                <div className="space-y-1">
+                  {memoizedFileSystem.map((item) => (
+                    <FileSystemItemComponent
+                      key={`${item.id}-${item.name}-${item.children?.length || 0}`}
+                      item={item}
+                      onToggleExpanded={handleToggleExpanded}
+                      onRename={handleRename}
+                      onDelete={handleDelete}
+                      onDuplicate={handleDuplicate}
+                      onAddItem={handleAddItem}
+                      onItemClick={handleItemClick}
+                      onItemDoubleClick={(itemId, itemName) => {
+                        setRenamingId(itemId)
+                        setRenameValue(itemName)
+                      }}
+                      showQuickAdd={showQuickAdd}
+                      setShowQuickAdd={setShowQuickAdd}
+                      renamingId={renamingId}
+                      setRenamingId={setRenamingId}
+                      renameValue={renameValue}
+                      setRenameValue={setRenameValue}
+                      clickTimeouts={clickTimeouts}
+                      setClickTimeouts={setClickTimeouts}
+                    />
+                  ))}
+                  {!hasContent && (
+                    <div className="text-center py-8 mt-4">
+                      <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted/30 flex items-center justify-center">
+                        <Folder className="w-6 h-6 text-muted-foreground/50" />
+                      </div>
+                      <h3 className="text-sm font-medium mb-1 text-foreground">Empty Root Folder</h3>
+                      <p className="text-xs text-muted-foreground mb-3 max-w-xs mx-auto">
+                        Click the + button on the root folder above to add your first item.
+                      </p>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-foreground">Ready to Build</h3>
-                    <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
-                      Start by loading a preset above or add your first folder to begin building your structure.
-                    </p>
-                    <div className="text-xs text-muted-foreground/60 bg-muted/20 rounded-lg p-3 max-w-xs mx-auto">
-                      💡 Try the "Next.js App" preset to see how it works
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

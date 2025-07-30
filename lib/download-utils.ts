@@ -39,24 +39,18 @@ export const downloadAsFolder = async (
       }
     }
 
-    // Handle multiple root folders
-    if (fileSystem.length === 1 && fileSystem[0]?.children) {
-      // Single root folder - create its children directly
-      await createStructure(fileSystem[0].children, dirHandle)
-    } else {
-      // Multiple root folders - create each root folder
-      for (const rootItem of fileSystem) {
-        if (rootItem.type === "folder") {
-          const rootFolderHandle = await dirHandle.getDirectoryHandle(rootItem.name, { create: true })
-          if (rootItem.children && rootItem.children.length > 0) {
-            await createStructure(rootItem.children, rootFolderHandle)
-          }
-          // Empty root folders are created automatically, no need for .gitkeep
-        }
-      }
+    // Get the root folder name
+    const rootFolderName = fileSystem[0]?.name || "root"
+
+    // Create the root folder in the selected directory
+    const rootHandle = await dirHandle.getDirectoryHandle(rootFolderName, { create: true })
+
+    // Create the structure inside the root folder
+    if (fileSystem[0]?.children) {
+      await createStructure(fileSystem[0].children, rootHandle)
     }
 
-    alert("Folder structure created successfully!")
+    alert(`Folder structure "${rootFolderName}" created successfully!`)
   } catch (error) {
     if ((error as Error).name === "AbortError") {
       // User cancelled the directory picker
@@ -75,38 +69,24 @@ export const downloadAsZip = async (fileSystem: FileSystemItem[]): Promise<void>
     const JSZip = (await import("jszip")).default
     const zip = new JSZip()
 
-    const addToZip = (items: FileSystemItem[], currentPath = "") => {
+    const addToZip = (items: FileSystemItem[], parentZip: any) => {
       items.forEach((item) => {
-        const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
-
         if (item.type === "folder") {
-          // Create empty folder - JSZip will handle empty folders properly
-          zip.folder(itemPath)
-          if (item.children && item.children.length > 0) {
-            addToZip(item.children, itemPath)
+          const folder = parentZip.folder(item.name)
+          if (folder && item.children && item.children.length > 0) {
+            addToZip(item.children, folder)
           }
-          // No .gitkeep needed - empty folders are preserved in ZIP
         } else {
-          zip.file(itemPath, "")
+          parentZip.file(item.name, "")
         }
       })
     }
 
-    // Handle multiple root folders
-    if (fileSystem.length === 1 && fileSystem[0]?.children) {
-      // Single root folder - add its children directly
-      addToZip(fileSystem[0].children)
-    } else {
-      // Multiple root folders - add each root folder
-      fileSystem.forEach((rootItem) => {
-        if (rootItem.type === "folder") {
-          zip.folder(rootItem.name)
-          if (rootItem.children && rootItem.children.length > 0) {
-            addToZip(rootItem.children, rootItem.name)
-          }
-          // No .gitkeep needed - empty folders are preserved in ZIP
-        }
-      })
+    const rootFolderName = fileSystem[0]?.name || "root"
+    const rootFolder = zip.folder(rootFolderName)
+
+    if (rootFolder && fileSystem[0]?.children) {
+      addToZip(fileSystem[0].children, rootFolder)
     }
 
     const content = await zip.generateAsync({ type: "blob" })
@@ -115,12 +95,7 @@ export const downloadAsZip = async (fileSystem: FileSystemItem[]): Promise<void>
     link.href = url
 
     // Generate filename based on structure
-    let filename = "folder-structure"
-    if (fileSystem.length === 1 && fileSystem[0]?.name) {
-      filename = fileSystem[0].name
-    } else if (fileSystem.length > 1) {
-      filename = "multiple-folders"
-    }
+    const filename = fileSystem[0]?.name || "folder-structure"
 
     link.download = `${filename}-${new Date().toISOString().split("T")[0]}.zip`
     document.body.appendChild(link)

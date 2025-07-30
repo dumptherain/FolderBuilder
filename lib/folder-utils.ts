@@ -18,7 +18,7 @@ export const sortItems = (items: FileSystemItem[]): FileSystemItem[] => {
 // Generate incremented name for duplicates with smart number detection
 export const generateIncrementedName = (baseName: string, existingNames: string[]): string => {
   // Check if name starts with a number (like 01_SHOT, 02_Audio, etc.)
-  const frontNumberMatch = baseName.match(/^(\d+)(_?)(.+)$/)
+  const frontNumberMatch = baseName.match(/^(\d+)(_?)(.*)$/)
 
   if (frontNumberMatch) {
     // Name starts with a number, increment it
@@ -53,32 +53,15 @@ export const generateIncrementedName = (baseName: string, existingNames: string[
     return newName
   }
 
-  // Check if name already has an underscore-separated number suffix (like "Item_2")
-  const underscoreNumberMatch = baseName.match(/^(.+?)(_)(\d+)$/)
+  // Name has no number suffix, start with "_01" (always use underscore and zero-padding)
+  let counter = 1
+  let newName = `${baseName}_${counter.toString().padStart(2, "0")}`
 
-  if (underscoreNumberMatch) {
-    // Name has underscore + number suffix, increment it
-    const [, name, separator, numStr] = underscoreNumberMatch
-    let counter = Number.parseInt(numStr) + 1
-    const paddingLength = Math.max(numStr.length, 2) // Minimum 2 digits for consistency
-    let newName = `${name}${separator}${counter.toString().padStart(paddingLength, "0")}`
-
-    while (existingNames.includes(newName)) {
-      counter++
-      newName = `${name}${separator}${counter.toString().padStart(paddingLength, "0")}`
-    }
-    return newName
-  } else {
-    // Name has no number suffix, start with "_01" (always use underscore and zero-padding)
-    let counter = 1
-    let newName = `${baseName}_${counter.toString().padStart(2, "0")}`
-
-    while (existingNames.includes(newName)) {
-      counter++
-      newName = `${baseName}_${counter.toString().padStart(2, "0")}`
-    }
-    return newName
+  while (existingNames.includes(newName)) {
+    counter++
+    newName = `${baseName}_${counter.toString().padStart(2, "0")}`
   }
+  return newName
 }
 
 // Deep clone function for history

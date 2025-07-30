@@ -1,41 +1,39 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback } from "react"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 import { useToast } from "@/hooks/use-toast"
-import type { FileSystemItem, HistoryState } from "@/types/folder"
-import {
-  sortItems,
-  deepClone,
-  updateItem,
-  addToParent,
-  deleteItem,
-  toggleExpanded,
-  findItemAndParent,
-  deepCopyItem,
-  generateIncrementedName,
-} from "@/lib/folder-utils"
+import { sortItems, deepClone, findItemAndParent, generateIncrementedName, deepCopyItem } from "@/lib/folder-utils"
+import type { FileSystemItem } from "@/types/folder"
 
-export const useFileSystem = () => {
+interface HistoryState {
+  fileSystem: FileSystemItem[]
+  timestamp: number
+  action: string
+}
+
+const initialFileSystem: FileSystemItem[] = [{ id: "root", name: "root", type: "folder", children: [], expanded: true }]
+
+export function useFileSystem() {
   const { toast } = useToast()
-  const initialFileSystem: FileSystemItem[] = [
-    { id: "root", name: "root", type: "folder", children: [], expanded: true },
-  ]
-
-  const [fileSystem, setFileSystem] = useState<FileSystemItem[]>(initialFileSystem)
+  const [fileSystem, setFileSystem] = useLocalStorage<FileSystemItem[]>("folder-structure", initialFileSystem)
   const [history, setHistory] = useState<HistoryState[]>([
     { fileSystem: deepClone(initialFileSystem), timestamp: Date.now(), action: "Initial state" },
   ])
   const [historyIndex, setHistoryIndex] = useState(0)
 
-  // Memoize the current file system to ensure consistent references
-  const memoizedFileSystem = useMemo(() => {
-    return fileSystem
-  }, [fileSystem])
+  const canUndo = historyIndex > 0
+  const canRedo = historyIndex < history.length - 1
 
-  // Add to history function
+  const ensureRootFolder = useCallback((fs: FileSystemItem[]): FileSystemItem[] => {
+    if (!fs || fs.length === 0 || !fs[0] || fs[0].id !== "root" || fs[0].type !== "folder") {
+      return initialFileSystem
+    }
+    return [fs[0]]
+  }, [])
+
   const addToHistory = useCallback(
     (newFileSystem: FileSystemItem[], action: string) => {
-      // Remove expansion states before storing in history
       const stripExpansionStates = (items: FileSystemItem[]): FileSystemItem[] => {
         return items.map((item) => {
           const { expanded, ...itemWithoutExpansion } = item
@@ -52,11 +50,9 @@ export const useFileSystem = () => {
         action,
       }
 
-      // Remove any future history if we're not at the end
       const newHistory = history.slice(0, historyIndex + 1)
       newHistory.push(newHistoryState)
 
-      // Limit history to 50 states to prevent memory issues
       if (newHistory.length > 50) {
         newHistory.shift()
       } else {
@@ -68,109 +64,137 @@ export const useFileSystem = () => {
     [history, historyIndex],
   )
 
-  // Undo function
+  const updateFileSystem = useCallback(
+    (newFileSystem: FileSystemItem[], action: string) => {
+      const validatedFileSystem = ensureRootFolder(newFileSystem)
+      setFileSystem(validatedFileSystem)
+      addToHistory(validatedFileSystem, action)
+    },
+    [ensureRootFolder, addToHistory, setFileSystem],
+  )
+
+  const findItemById = useCallback((items: FileSystemItem[], id: string): FileSystemItem | null => {
+    for (const item of items) {
+      if (item.id === id) return item
+      if (item.children) {
+        const found = findItemById(item.children, id)
+        if (found) return found
+      }
+    }
+    return null
+  }, [])
+
+  const updateItemInTree = useCallback(
+    (
+      items: FileSystemItem[],
+      targetId: string,
+      updater: (item: FileSystemItem) => FileSystemItem,
+    ): FileSystemItem[] => {
+      return items.map((item) => {
+        if (item.id === targetId) {
+          return updater(item)
+        }
+        if (item.children) {
+          return {
+            ...item,
+            children: updateItemInTree(item.children, targetId, updater),
+          }
+        }
+        return item
+      })
+    },
+    [],
+  )
+
+  const removeItemFromTree = useCallback((items: FileSystemItem[], targetId: string): FileSystemItem[] => {
+    return items
+      .filter((item) => item.id !== targetId)
+      .map((item) => ({
+        ...item,
+        children: item.children ? removeItemFromTree(item.children, targetId) : item.children,
+      }))
+  }, [])
+
+  const addItemToTree = useCallback(
+    (items: FileSystemItem[], parentId: string, newItem: FileSystemItem): FileSystemItem[] => {
+      return items.map((item) => {
+        if (item.id === parentId && item.type === "folder") {
+          const updatedChildren = [...(item.children || []), newItem]
+          return {
+            ...item,
+            children: sortItems(updatedChildren),
+            expanded: true,
+          }
+        }
+        if (item.children) {
+          return {
+            ...item,
+            children: addItemToTree(item.children, parentId, newItem),
+          }
+        }
+        return item
+      })
+    },
+    [],
+  )
+
   const handleUndo = useCallback(() => {
-    if (historyIndex > 0) {
-      // Get current expansion states before undoing
-      const getCurrentExpansionStates = (items: FileSystemItem[]): Map<string, boolean> => {
-        const expansionMap = new Map<string, boolean>()
-
-        const traverse = (items: FileSystemItem[]) => {
-          items.forEach((item) => {
-            if (item.type === "folder" && item.expanded !== undefined) {
-              expansionMap.set(item.id, item.expanded)
-            }
-            if (item.children) {
-              traverse(item.children)
-            }
-          })
-        }
-
-        traverse(items)
-        return expansionMap
-      }
-
-      // Apply expansion states to restored structure
-      const applyExpansionStates = (items: FileSystemItem[], expansionMap: Map<string, boolean>): FileSystemItem[] => {
-        return items.map((item) => {
-          const restoredItem = { ...item }
-
-          if (item.type === "folder") {
-            // Preserve expansion state if it exists, otherwise default to false
-            restoredItem.expanded = expansionMap.get(item.id) ?? false
-          }
-
-          if (item.children) {
-            restoredItem.children = applyExpansionStates(item.children, expansionMap)
-          }
-
-          return restoredItem
-        })
-      }
-
-      const currentExpansionStates = getCurrentExpansionStates(fileSystem)
+    if (canUndo) {
       const newIndex = historyIndex - 1
-      const restoredStructure = deepClone(history[newIndex].fileSystem)
-      const structureWithExpansion = applyExpansionStates(restoredStructure, currentExpansionStates)
+      const targetState = history[newIndex]
 
-      setHistoryIndex(newIndex)
-      setFileSystem(structureWithExpansion)
-    }
-  }, [historyIndex, history, fileSystem])
-
-  // Redo function
-  const handleRedo = useCallback(() => {
-    if (historyIndex < history.length - 1) {
-      // Get current expansion states before redoing
-      const getCurrentExpansionStates = (items: FileSystemItem[]): Map<string, boolean> => {
-        const expansionMap = new Map<string, boolean>()
-
-        const traverse = (items: FileSystemItem[]) => {
-          items.forEach((item) => {
-            if (item.type === "folder" && item.expanded !== undefined) {
-              expansionMap.set(item.id, item.expanded)
-            }
-            if (item.children) {
-              traverse(item.children)
-            }
-          })
-        }
-
-        traverse(items)
-        return expansionMap
-      }
-
-      // Apply expansion states to restored structure
-      const applyExpansionStates = (items: FileSystemItem[], expansionMap: Map<string, boolean>): FileSystemItem[] => {
+      const restoreExpansionStates = (items: FileSystemItem[], currentItems: FileSystemItem[]): FileSystemItem[] => {
         return items.map((item) => {
-          const restoredItem = { ...item }
-
-          if (item.type === "folder") {
-            // Preserve expansion state if it exists, otherwise default to false
-            restoredItem.expanded = expansionMap.get(item.id) ?? false
+          const currentItem = findItemById(currentItems, item.id)
+          return {
+            ...item,
+            expanded: currentItem?.expanded ?? (item.id === "root" ? true : false),
+            children: item.children ? restoreExpansionStates(item.children, currentItems) : item.children,
           }
-
-          if (item.children) {
-            restoredItem.children = applyExpansionStates(item.children, expansionMap)
-          }
-
-          return restoredItem
         })
       }
 
-      const currentExpansionStates = getCurrentExpansionStates(fileSystem)
-      const newIndex = historyIndex + 1
-      const restoredStructure = deepClone(history[newIndex].fileSystem)
-      const structureWithExpansion = applyExpansionStates(restoredStructure, currentExpansionStates)
-
+      const restoredFileSystem = restoreExpansionStates(targetState.fileSystem, fileSystem)
+      setFileSystem(restoredFileSystem)
       setHistoryIndex(newIndex)
-      setFileSystem(structureWithExpansion)
     }
-  }, [historyIndex, history, fileSystem])
+  }, [canUndo, historyIndex, history, fileSystem, setFileSystem, findItemById])
 
-  // File system operations with immediate state updates
+  const handleRedo = useCallback(() => {
+    if (canRedo) {
+      const newIndex = historyIndex + 1
+      const targetState = history[newIndex]
+
+      const restoreExpansionStates = (items: FileSystemItem[], currentItems: FileSystemItem[]): FileSystemItem[] => {
+        return items.map((item) => {
+          const currentItem = findItemById(currentItems, item.id)
+          return {
+            ...item,
+            expanded: currentItem?.expanded ?? (item.id === "root" ? true : false),
+            children: item.children ? restoreExpansionStates(item.children, currentItems) : item.children,
+          }
+        })
+      }
+
+      const restoredFileSystem = restoreExpansionStates(targetState.fileSystem, fileSystem)
+      setFileSystem(restoredFileSystem)
+      setHistoryIndex(newIndex)
+    }
+  }, [canRedo, historyIndex, history, fileSystem, setFileSystem, findItemById])
+
+  const handleToggleExpanded = useCallback(
+    (id: string) => {
+      const newFileSystem = updateItemInTree(fileSystem, id, (item) => ({
+        ...item,
+        expanded: !item.expanded,
+      }))
+      setFileSystem(newFileSystem)
+    },
+    [fileSystem, updateItemInTree, setFileSystem],
+  )
+
   const handleRename = useCallback(
-    (itemId: string, newName: string) => {
+    (id: string, newName: string): boolean => {
       const trimmedName = newName.trim()
       if (!trimmedName) {
         toast({
@@ -181,126 +205,86 @@ export const useFileSystem = () => {
         return false
       }
 
-      // Handle root rename separately
-      if (itemId === "root") {
-        if (fileSystem[0].name !== trimmedName) {
-          const newFileSystem = [{ ...fileSystem[0], name: trimmedName }]
-          setFileSystem(newFileSystem)
-          addToHistory(newFileSystem, `Renamed root to "${trimmedName}"`)
+      const parentInfo = findItemAndParent(fileSystem, id)
+      if (parentInfo) {
+        const isDuplicate = parentInfo.siblings.some(
+          (sibling) => sibling.id !== id && sibling.name.toLowerCase() === trimmedName.toLowerCase(),
+        )
+
+        if (isDuplicate) {
+          toast({
+            title: "Rename Failed",
+            description: `An item named "${trimmedName}" already exists in this folder.`,
+            variant: "destructive",
+          })
+          return false
         }
-        return true
       }
 
-      // Handle other items
-      const result = findItemAndParent(fileSystem, itemId)
-      if (!result) {
-        toast({
-          title: "Rename Failed",
-          description: "Item not found.",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      const { item, siblings } = result
-
-      // Don't do anything if name is the same
-      if (item.name === trimmedName) {
-        return true
-      }
-
-      // Check for duplicates (case-insensitive)
-      const isDuplicate = siblings.some(
-        (sibling) => sibling.id !== itemId && sibling.name.toLowerCase() === trimmedName.toLowerCase(),
-      )
-
-      if (isDuplicate) {
-        toast({
-          title: "Rename Failed",
-          description: `An item named "${trimmedName}" already exists in this folder.`,
-          variant: "destructive",
-        })
-        return false
-      }
-
-      const newFileSystem = updateItem(fileSystem, itemId, { name: trimmedName })
-      setFileSystem(newFileSystem)
-      addToHistory(newFileSystem, `Renamed item to "${trimmedName}"`)
+      const newFileSystem = updateItemInTree(fileSystem, id, (item) => ({
+        ...item,
+        name: trimmedName,
+      }))
+      updateFileSystem(newFileSystem, `Renamed "${findItemById(fileSystem, id)?.name}" to "${trimmedName}"`)
       return true
     },
-    [fileSystem, addToHistory, toast],
+    [fileSystem, updateItemInTree, updateFileSystem, findItemById, toast],
   )
 
   const handleDelete = useCallback(
     (id: string) => {
-      const newFileSystem = deleteItem(fileSystem, id)
-      setFileSystem(newFileSystem)
-      addToHistory(newFileSystem, "Deleted item")
+      if (id === "root") return
+
+      const itemToDelete = findItemById(fileSystem, id)
+      if (!itemToDelete) return
+
+      const newFileSystem = removeItemFromTree(fileSystem, id)
+      updateFileSystem(newFileSystem, `Deleted "${itemToDelete.name}"`)
     },
-    [fileSystem, addToHistory],
+    [fileSystem, findItemById, removeItemFromTree, updateFileSystem],
   )
 
   const handleDuplicate = useCallback(
     (id: string) => {
-      if (id === "root") return // Prevent duplicating the root folder
+      const itemInfo = findItemAndParent(fileSystem, id)
+      if (!itemInfo) return
 
-      const result = findItemAndParent(fileSystem, id)
-      if (!result) return
+      const { item: itemToDuplicate, parentId = "root", siblings } = itemInfo
 
-      const { item, parentId, siblings } = result
       const existingNames = siblings.map((sibling) => sibling.name)
-      const newName = generateIncrementedName(item.name, existingNames)
+      const newName = generateIncrementedName(itemToDuplicate.name, existingNames)
 
-      // Deep copy the entire item structure
-      const duplicatedItem = deepCopyItem(item)
-      // Update only the root item's name with the incremented version
-      duplicatedItem.name = newName
+      const newItem = deepCopyItem(itemToDuplicate)
+      newItem.name = newName
 
-      let newFileSystem: FileSystemItem[]
-      if (parentId) {
-        newFileSystem = addToParent(fileSystem, parentId, duplicatedItem)
-      } else {
-        // Duplicating root item
-        newFileSystem = sortItems([...fileSystem, duplicatedItem])
-      }
-
-      setFileSystem(newFileSystem)
-      addToHistory(newFileSystem, `Duplicated "${item.name}" as "${newName}"`)
+      const newFileSystem = addItemToTree(fileSystem, parentId, newItem)
+      updateFileSystem(newFileSystem, `Duplicated "${itemToDuplicate.name}" as "${newName}"`)
     },
-    [fileSystem, addToHistory],
-  )
-
-  const handleToggleExpanded = useCallback(
-    (id: string) => {
-      const newFileSystem = toggleExpanded(fileSystem, id)
-      setFileSystem(newFileSystem)
-      // Don't add expand/collapse to history as it's not a structural change
-    },
-    [fileSystem],
+    [fileSystem, addItemToTree, updateFileSystem],
   )
 
   const handleAddItem = useCallback(
     (parentId: string, type: "file" | "folder", name: string) => {
-      const trimmedName = name.trim()
-      if (!trimmedName) return
+      if (!name.trim()) return
 
       const newItem: FileSystemItem = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        name: trimmedName,
+        name: name.trim(),
         type,
         children: type === "folder" ? [] : undefined,
         expanded: false,
       }
-      const newFileSystem = addToParent(fileSystem, parentId, newItem)
-      setFileSystem(newFileSystem)
-      addToHistory(newFileSystem, `Added ${type} "${trimmedName}"`)
+
+      const newFileSystem = addItemToTree(fileSystem, parentId, newItem)
+      updateFileSystem(newFileSystem, `Added ${type} "${name.trim()}"`)
     },
-    [fileSystem, addToHistory],
+    [fileSystem, addItemToTree, updateFileSystem],
   )
 
   const loadPresetStructure = useCallback(
     (presetStructure: any[], rootName: string) => {
       const assignIds = (items: any[]): FileSystemItem[] => {
+        if (!items || items.length === 0) return []
         return sortItems(
           items.map((item) => ({
             ...item,
@@ -321,24 +305,24 @@ export const useFileSystem = () => {
         },
       ]
 
-      setFileSystem(newFileSystem)
+      setFileSystem(ensureRootFolder(newFileSystem))
       addToHistory(newFileSystem, `Loaded preset structure`)
     },
-    [addToHistory],
+    [addToHistory, ensureRootFolder, setFileSystem],
   )
 
   return {
-    fileSystem: memoizedFileSystem,
+    fileSystem,
     history,
     historyIndex,
-    canUndo: historyIndex > 0,
-    canRedo: historyIndex < history.length - 1,
+    canUndo,
+    canRedo,
     handleUndo,
     handleRedo,
+    handleToggleExpanded,
     handleRename,
     handleDelete,
     handleDuplicate,
-    handleToggleExpanded,
     handleAddItem,
     loadPresetStructure,
   }

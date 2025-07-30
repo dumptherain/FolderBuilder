@@ -1,0 +1,144 @@
+{
+  "name": "Video Production Copy",
+  "description": "Comprehensive video production workflow structure (copy)",
+  "structure": [
+    {
+      "name": "01_PRE_PRODUCTION",
+      "type": "folder",
+      "children": [
+        { "name": "scripts", "type": "folder" },
+        { "name": "storyboards", "type": "folder" },
+        { "name": "shot_lists", "type": "folder" },
+        { "name": "location_scouting", "type": "folder" },
+        { "name": "casting", "type": "folder" },
+        { "name": "scheduling", "type": "folder" },
+        { "name": "budgets", "type": "folder" },
+        { "name": "contracts", "type": "folder" }
+      ]
+    },
+    {
+      "name": "02_PRODUCTION",
+      "type": "folder",
+      "children": [
+        {
+          "name": "footage",
+          "type": "folder",
+          "children": [
+            { "name": "camera_a", "type": "folder" },
+            { "name": "camera_b", "type": "folder" },
+            { "name": "camera_c", "type": "folder" },
+            { "name": "drone", "type": "folder" },
+            { "name": "backup", "type": "folder" }
+          ]
+        },
+        {
+          "name": "audio",
+          "type": "folder",
+          "children": [
+            { "name": "dialogue", "type": "folder" },
+            { "name": "ambient", "type": "folder" },
+            { "name": "music", "type": "folder" },
+            { "name": "sfx", "type": "folder" }
+          ]
+        },
+        { "name": "photos", "type": "folder" },
+        { "name": "documents", "type": "folder" },
+        { "name": "call_sheets", "type": "folder" }
+      ]
+    },
+    {
+      "name": "03_POST_PRODUCTION",
+      "type": "folder",
+      "children": [
+        {
+          "name": "editing",
+          "type": "folder",
+          "children": [
+            { "name": "project_files", "type": "folder" },
+            { "name": "sequences", "type": "folder" },
+            { "name": "rough_cuts", "type": "folder" },
+            { "name": "fine_cuts", "type": "folder" },
+            { "name": "final_cut", "type": "folder" }
+          ]
+        },
+        {
+          "name": "color_grading",
+          "type": "folder",
+          "children": [
+            { "name": "luts", "type": "folder" },
+            { "name": "grades", "type": "folder" },
+            { "name": "references", "type": "folder" }
+          ]
+        },
+        {
+          "name": "audio_post",
+          "type": "folder",
+          "children": [
+            { "name": "mixing", "type": "folder" },
+            { "name": "mastering", "type": "folder" },
+            { "name": "stems", "type": "folder" }
+          ]
+        },
+        {
+          "name": "vfx",
+          "type": "folder",
+          "children": [
+            { "name": "compositing", "type": "folder" },
+            { "name": "motion_graphics", "type": "folder" },
+            { "name": "3d_elements", "type": "folder" }
+          ]
+        },
+        { "name": "titles_graphics", "type": "folder" }
+      ]
+    },
+    {
+      "name": "04_ASSETS",
+      "type": "folder",
+      "children": [
+        { "name": "logos", "type": "folder" },
+        { "name": "graphics", "type": "folder" },
+        { "name": "stock_footage", "type": "folder" },
+        { "name": "stock_music", "type": "folder" },
+        { "name": "fonts", "type": "folder" },
+        { "name": "templates", "type": "folder" }
+      ]
+    },
+    {
+      "name": "05_DELIVERY",
+      "type": "folder",
+      "children": [
+        {
+          "name": "masters",
+          "type": "folder",
+          "children": [
+            { "name": "4k", "type": "folder" },
+            { "name": "1080p", "type": "folder" },
+            { "name": "720p", "type": "folder" }
+          ]
+        },
+        {
+          "name": "versions",
+          "type": "folder",
+          "children": [
+            { "name": "director_cut", "type": "folder" },
+            { "name": "client_versions", "type": "folder" },
+            { "name": "social_media", "type": "folder" },
+            { "name": "broadcast", "type": "folder" }
+          ]
+        },
+        { "name": "subtitles", "type": "folder" },
+        { "name": "closed_captions", "type": "folder" }
+      ]
+    },
+    {
+      "name": "06_ARCHIVE",
+      "type": "folder",
+      "children": [
+        { "name": "project_backup", "type": "folder" },
+        { "name": "raw_footage_archive", "type": "folder" },
+        { "name": "documentation", "type": "folder" },
+        { "name": "client_communication", "type": "folder" }
+      ]
+    }
+  ]
+}

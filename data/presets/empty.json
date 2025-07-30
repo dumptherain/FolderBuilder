@@ -1,8 +1,8 @@
 {
-  "value": "empty",
-  "label": "Empty Project",
-  "category": "Getting Started",
-  "description": "Start with a clean slate",
+  "value": "empty-root",
+  "label": "Root Folder Only",
+  "category": "Minimal",
+  "description": "Creates a single root folder with no content",
   "rootName": "root",
   "structure": []
 }
