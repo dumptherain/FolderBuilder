@@ -10,10 +10,10 @@ export default function Home() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 bg-gradient-to-br from-slate-600 to-slate-800 dark:from-slate-400 dark:to-slate-600 rounded-md flex items-center justify-center">
-                  <span className="text-white dark:text-slate-900 font-semibold text-xs">FS</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-slate-600 to-slate-800 dark:from-slate-400 dark:to-slate-600 rounded-md flex items-center justify-center">
+                  <span className="text-white dark:text-slate-900 font-semibold text-sm">FS</span>
                 </div>
-                <h1 className="text-lg font-medium text-foreground">Folder Structure Builder</h1>
+                <h1 className="text-xl font-medium text-foreground">Folder Structure Builder</h1>
               </div>
             </div>
             <ThemeToggle />
@@ -21,15 +21,20 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto p-6 lg:p-8">
-        <div className="flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-212px)]">
-          <div className="flex-1 min-w-0">
-            <FolderBuilder />
+      <div className="max-w-7xl mx-auto p-8 lg:p-10">
+        <div className="flex flex-col gap-8 min-h-[calc(100vh-240px)]">
+          {/* Main content area - centered */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-5xl">
+              <FolderBuilder />
+            </div>
           </div>
 
-          {/* Tips panel - below content on mobile/tablet, sidebar on desktop */}
-          <div className="lg:w-80 order-last lg:order-none">
-            <TipsPanel />
+          {/* Tips panel - same width as main content */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-5xl">
+              <TipsPanel />
+            </div>
           </div>
         </div>
       </div>

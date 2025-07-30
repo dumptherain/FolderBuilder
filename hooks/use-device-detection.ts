@@ -2,72 +2,83 @@
 
 import { useState, useEffect } from "react"
 
-export interface DeviceInfo {
+interface DeviceInfo {
   isMobile: boolean
   isTablet: boolean
   isDesktop: boolean
-  isTouchDevice: boolean
-  isIOS: boolean
-  isAndroid: boolean
+  hasTouch: boolean
   screenWidth: number
   screenHeight: number
-  orientation: "portrait" | "landscape"
   pixelRatio: number
+  platform: string
+  userAgent: string
+  orientation: "portrait" | "landscape"
+  breakpoint: "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
 }
 
 export function useDeviceDetection(): DeviceInfo {
-  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({
-    isMobile: false,
-    isTablet: false,
-    isDesktop: true,
-    isTouchDevice: false,
-    isIOS: false,
-    isAndroid: false,
-    screenWidth: 1024,
-    screenHeight: 768,
-    orientation: "landscape",
-    pixelRatio: 1,
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>(() => {
+    // Default values for SSR
+    return {
+      isMobile: false,
+      isTablet: false,
+      isDesktop: true,
+      hasTouch: false,
+      screenWidth: 1024,
+      screenHeight: 768,
+      pixelRatio: 1,
+      platform: "unknown",
+      userAgent: "",
+      orientation: "landscape",
+      breakpoint: "lg",
+    }
   })
 
   useEffect(() => {
     const updateDeviceInfo = () => {
       const width = window.innerWidth
       const height = window.innerHeight
-      const userAgent = navigator.userAgent.toLowerCase()
-      const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0
+      const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0
+      const userAgent = navigator.userAgent
+      const platform = navigator.platform
       const pixelRatio = window.devicePixelRatio || 1
 
-      // Platform detection
-      const isIOS = /ipad|iphone|ipod/.test(userAgent)
-      const isAndroid = /android/.test(userAgent)
+      // Determine device type
+      const isMobile = width < 768
+      const isTablet = width >= 768 && width < 1024 && hasTouch
+      const isDesktop = width >= 1024
 
-      // Device type detection based on multiple factors
-      const isMobile = width < 768 || (isTouchDevice && width < 1024 && !/ipad/.test(userAgent))
-      const isTablet =
-        (width >= 768 && width < 1024) || /ipad/.test(userAgent) || (isAndroid && width >= 768 && width < 1200)
-      const isDesktop = width >= 1024 && !isTouchDevice
-
-      // Orientation
+      // Determine orientation
       const orientation = width > height ? "landscape" : "portrait"
+
+      // Determine breakpoint
+      let breakpoint: DeviceInfo["breakpoint"] = "lg"
+      if (width < 640) breakpoint = "xs"
+      else if (width < 768) breakpoint = "sm"
+      else if (width < 1024) breakpoint = "md"
+      else if (width < 1280) breakpoint = "lg"
+      else if (width < 1536) breakpoint = "xl"
+      else breakpoint = "2xl"
 
       setDeviceInfo({
         isMobile,
         isTablet,
         isDesktop,
-        isTouchDevice,
-        isIOS,
-        isAndroid,
+        hasTouch,
         screenWidth: width,
         screenHeight: height,
-        orientation,
         pixelRatio,
+        platform,
+        userAgent,
+        orientation,
+        breakpoint,
       })
     }
 
     // Initial detection
     updateDeviceInfo()
 
-    // Listen for resize and orientation changes
+    // Listen for resize events
     window.addEventListener("resize", updateDeviceInfo)
     window.addEventListener("orientationchange", updateDeviceInfo)
 

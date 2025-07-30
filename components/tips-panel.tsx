@@ -1,146 +1,178 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronUp, Lightbulb, Keyboard, Mouse, Smartphone } from "lucide-react"
+import {
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  Keyboard,
+  Smartphone,
+  Monitor,
+  Tablet,
+  Download,
+  Sparkles,
+  MousePointer,
+  Copy,
+} from "lucide-react"
 import { useDeviceDetection } from "@/hooks/use-device-detection"
-import { TouchOptimizedButton } from "./touch-optimized-button"
-import { cn } from "@/lib/utils"
+import { useLocalStorage } from "@/hooks/use-local-storage"
+import { TouchOptimizedButton } from "@/components/touch-optimized-button"
 
 export function TipsPanel() {
-  const [isOpen, setIsOpen] = useState(false)
   const device = useDeviceDetection()
+  const [isOpen, setIsOpen] = useLocalStorage("tips-panel-open", false)
+
+  const getDeviceIcon = () => {
+    if (device.isMobile) return Smartphone
+    if (device.isTablet) return Tablet
+    return Monitor
+  }
+
+  const getControlsTitle = () => {
+    if (device.isMobile) return "Mobile Controls"
+    if (device.isTablet) return "Tablet Controls"
+    return "Desktop Controls"
+  }
+
+  const getControlsItems = () => {
+    if (device.hasTouch) {
+      return [
+        "Tap folder to expand/collapse",
+        "Long press any item to rename",
+        "Tap + button to add folders/files",
+        "Use dropdown menu for more actions",
+        "Swipe gestures for quick navigation",
+      ]
+    }
+    return [
+      "Single click folder to expand/collapse",
+      "Double click any item to rename",
+      "Hover over items for action buttons",
+      "Right-click for context menu",
+      "Click outside input to cancel rename",
+    ]
+  }
 
   const tips = [
     {
-      icon: device.isTouch ? Smartphone : Mouse,
-      title: device.isTouch ? "Touch Controls" : "Mouse Controls",
-      items: device.isTouch
-        ? [
-            "Tap to expand/collapse folders",
-            "Long press to rename items",
-            "Tap + to add new items",
-            "Swipe for quick actions",
-          ]
-        : [
-            "Single click to expand/collapse",
-            "Double click to rename",
-            "Right click for context menu",
-            "Drag to reorder items",
-          ],
+      icon: getDeviceIcon(),
+      title: getControlsTitle(),
+      items: getControlsItems(),
     },
     {
       icon: Keyboard,
       title: "Keyboard Shortcuts",
       items: [
         "Ctrl/Cmd + Z: Undo last action",
-        "Ctrl/Cmd + S: Save preset",
-        "Ctrl/Cmd + O: Load preset",
-        "Delete: Remove selected item",
+        "Enter: Confirm rename/add operation",
+        "Escape: Cancel current operation",
+        "Tab: Navigate between elements",
+        "Space: Toggle folder expansion",
       ],
     },
     {
-      icon: Lightbulb,
-      title: "Pro Tips",
+      icon: MousePointer,
+      title: "Item Actions",
       items: [
-        "Use presets for common structures",
-        "Export as ZIP for easy sharing",
-        "Nested folders create hierarchy",
-        "File extensions are preserved",
+        "Add: Create new folders and files",
+        "Rename: Double-click or long press",
+        "Delete: Remove items permanently",
+        "Duplicate: Copy items with '_copy' suffix",
+        "Drag handles for visual feedback",
+      ],
+    },
+    {
+      icon: Sparkles,
+      title: "Presets & Templates",
+      items: [
+        "Load built-in presets (Next.js, React, etc.)",
+        "Save custom presets for reuse",
+        "Import/Export preset files (.json)",
+        "Delete custom presets when needed",
+        "Share presets with your team",
+      ],
+    },
+    {
+      icon: Download,
+      title: "Export Options",
+      items: [
+        "Create Folders: Direct folder creation",
+        "Download ZIP: Universal file format",
+        "Preserves exact folder structure",
+        "Empty folders include .gitkeep files",
+        "Smart filename generation",
+      ],
+    },
+    {
+      icon: Copy,
+      title: "Multi-Root Support",
+      items: [
+        "Duplicate root folders for complex projects",
+        "Each root appears in structure outline",
+        "Item counter includes all roots",
+        "Export handles multiple root folders",
+        "Presets support multi-root structures",
       ],
     },
   ]
 
-  // On mobile/tablet, show as collapsible card
-  if (device.isMobile || device.isTablet) {
-    return (
-      <Card className="w-full">
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle
-                  className={cn("flex items-center gap-2", device.isMobile && "text-lg", device.isTablet && "text-xl")}
-                >
-                  <Lightbulb className="h-5 w-5 text-yellow-500" />
-                  Tips & Shortcuts
-                </CardTitle>
-                <TouchOptimizedButton variant="ghost" size="sm" className="h-8 w-8 p-0" touchTarget="medium">
-                  {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </TouchOptimizedButton>
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="pt-0">
-              <div className="space-y-6">
-                {tips.map((section, index) => (
-                  <div key={index}>
-                    <h4
-                      className={cn(
-                        "font-medium mb-3 flex items-center gap-2",
-                        device.isMobile && "text-base",
-                        device.isTablet && "text-lg",
-                      )}
-                    >
-                      <section.icon className="h-4 w-4 text-muted-foreground" />
-                      {section.title}
-                    </h4>
-                    <ul className="space-y-2">
+  return (
+    <Card className="w-full border-border/30 bg-muted/20 shadow-sm">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors py-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Lightbulb className="h-4 w-4 text-yellow-500/70" />
+                Tips & Shortcuts
+              </CardTitle>
+              <TouchOptimizedButton variant="ghost" size="sm" className="h-7 w-7 p-0" touchTarget="small">
+                {isOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </TouchOptimizedButton>
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {tips.map((section, index) => (
+                <div key={index} className="flex gap-3 p-3 rounded-md bg-background/50 border border-border/20">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <section.icon className="h-3.5 w-3.5 text-muted-foreground/70" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-medium text-foreground/80 mb-2">{section.title}</h4>
+                    <ul className="space-y-1">
                       {section.items.map((tip, tipIndex) => (
                         <li
                           key={tipIndex}
-                          className={cn(
-                            "text-muted-foreground flex items-start gap-2",
-                            device.isMobile && "text-sm",
-                            device.isTablet && "text-base",
-                          )}
+                          className="text-xs text-muted-foreground/80 leading-relaxed flex items-start gap-1.5"
                         >
-                          <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full mt-2 flex-shrink-0" />
+                          <span className="w-1 h-1 bg-muted-foreground/50 rounded-full mt-1.5 flex-shrink-0" />
                           {tip}
                         </li>
                       ))}
                     </ul>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-    )
-  }
-
-  // On desktop, show as always-visible sidebar
-  return (
-    <Card className="h-fit sticky top-4">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Lightbulb className="h-5 w-5 text-yellow-500" />
-          Tips & Shortcuts
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {tips.map((section, index) => (
-            <div key={index}>
-              <h4 className="font-medium mb-3 flex items-center gap-2">
-                <section.icon className="h-4 w-4 text-muted-foreground" />
-                {section.title}
-              </h4>
-              <ul className="space-y-2">
-                {section.items.map((tip, tipIndex) => (
-                  <li key={tipIndex} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full mt-2 flex-shrink-0" />
-                    {tip}
-                  </li>
-                ))}
-              </ul>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </CardContent>
+
+            <div className="pt-4 mt-4 border-t border-border/20 space-y-3">
+              <div className="text-xs text-muted-foreground/60 text-center">
+                💡 <strong>Pro tip:</strong> Save frequently used structures as custom presets for quick reuse
+              </div>
+              <div className="text-xs text-muted-foreground/60 text-center">
+                🚀 <strong>Advanced:</strong> Duplicate root folders to create complex multi-project structures
+              </div>
+              <div className="text-xs text-muted-foreground/60 text-center">
+                📁 <strong>Export:</strong> Choose between direct folder creation, ZIP download, or both
+              </div>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   )
 }

@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import type React from "react"
+
+import { useState, useRef, useEffect, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -40,7 +42,8 @@ interface MobileFileSystemItemProps {
   setClickTimeouts: (timeouts: Map<string, NodeJS.Timeout>) => void
 }
 
-export function MobileFileSystemItem({
+// Memoize the component to prevent unnecessary re-renders
+export const MobileFileSystemItem = memo(function MobileFileSystemItem({
   item,
   level = 0,
   onToggleExpanded,
@@ -63,16 +66,19 @@ export function MobileFileSystemItem({
   const renameInputRef = useRef<HTMLInputElement>(null)
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null)
   const [isLongPress, setIsLongPress] = useState(false)
+  const [originalName, setOriginalName] = useState("")
 
   useEffect(() => {
     if (renamingId === item.id && renameInputRef.current) {
+      // Store the original name when starting to rename
+      setOriginalName(item.name)
       renameInputRef.current.focus()
       renameInputRef.current.select()
     }
-  }, [renamingId, item.id])
+  }, [renamingId, item.id, item.name])
 
   const handleTouchStart = () => {
-    if (!device.isTouchDevice) return
+    if (!device.hasTouch) return
 
     setIsLongPress(false)
     const timer = setTimeout(() => {
@@ -99,7 +105,7 @@ export function MobileFileSystemItem({
   }
 
   const handleClick = () => {
-    if (device.isTouchDevice) return // Handle via touch events
+    if (device.hasTouch) return // Handle via touch events
 
     if (item.type === "folder") {
       if (clickTimeouts.has(item.id)) {
@@ -134,16 +140,44 @@ export function MobileFileSystemItem({
   }
 
   const handleRename = (newName: string) => {
-    if (newName.trim()) {
+    if (newName.trim() && newName.trim() !== originalName) {
       onRename(item.id, newName.trim())
     }
     setRenamingId(null)
+    setOriginalName("")
+  }
+
+  const handleCancelRename = () => {
+    setRenamingId(null)
+    setOriginalName("")
+  }
+
+  const handleRenameBlur = () => {
+    // Only apply rename if the value has actually changed
+    if (renameValue.trim() && renameValue.trim() !== originalName) {
+      handleRename(renameValue)
+    } else {
+      handleCancelRename()
+    }
   }
 
   const quickAddItem = (type: "file" | "folder", name: string) => {
     if (!name.trim()) return
     onAddItem(item.id, type, name.trim())
     setShowQuickAdd(null)
+  }
+
+  const handleQuickAddBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Use setTimeout to allow for button clicks to register first
+    setTimeout(() => {
+      // Check if the focus moved to a related element (like the buttons)
+      const activeElement = document.activeElement
+      const parentContainer = e.currentTarget.parentElement
+
+      if (parentContainer && activeElement && !parentContainer.contains(activeElement)) {
+        setShowQuickAdd(null)
+      }
+    }, 150)
   }
 
   const touchTargetSize = device.isMobile ? "min-h-[48px]" : "min-h-[40px]"
@@ -194,10 +228,20 @@ export function MobileFileSystemItem({
             type="text"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
-            onBlur={() => handleRename(renameValue)}
+            onBlur={handleRenameBlur}
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleRename(renameValue)
-              if (e.key === "Escape") setRenamingId(null)
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleRename(renameValue)
+              }
+              if (e.key === "Escape") {
+                e.preventDefault()
+                handleCancelRename()
+              }
+            }}
+            onClick={(e) => {
+              // Prevent the click from bubbling up and triggering item actions
+              e.stopPropagation()
             }}
             className={cn(
               "flex-1 min-w-0 rounded-md border-0 bg-muted/30 px-2 py-1 focus:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-border",
@@ -329,6 +373,7 @@ export function MobileFileSystemItem({
                 }
                 if (e.key === "Escape") setShowQuickAdd(null)
               }}
+              onBlur={handleQuickAddBlur}
             />
             <div className="flex gap-2">
               <Button
@@ -366,7 +411,7 @@ export function MobileFileSystemItem({
         <div>
           {item.children.map((child) => (
             <MobileFileSystemItem
-              key={child.id}
+              key={`${child.id}-${child.name}-${child.children?.length || 0}`}
               item={child}
               level={level + 1}
               onToggleExpanded={onToggleExpanded}
@@ -390,4 +435,4 @@ export function MobileFileSystemItem({
       )}
     </div>
   )
-}
+})

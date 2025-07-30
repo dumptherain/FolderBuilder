@@ -1,0 +1,25 @@
+{
+  "value": "temp-example",
+  "label": "Example Temporary",
+  "description": "A sample temporary preset to get you started",
+  "category": "Temporary",
+  "rootName": "example-project",
+  "structure": [
+    {
+      "id": "1",
+      "name": "src",
+      "type": "folder",
+      "children": [
+        { "id": "2", "name": "components", "type": "folder", "children": [] },
+        { "id": "3", "name": "utils", "type": "folder", "children": [] },
+        { "id": "4", "name": "index.js", "type": "file", "children": [] }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "docs",
+      "type": "folder",
+      "children": [{ "id": "6", "name": "README.md", "type": "file", "children": [] }]
+    }
+  ]
+}

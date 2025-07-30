@@ -1,4 +1,4 @@
-import { FileSystemItem } from "@/types/folder"
+import type { FileSystemItem } from "@/types/folder"
 
 // Sorting function - folders first, then alphabetical
 export const sortItems = (items: FileSystemItem[]): FileSystemItem[] => {
@@ -53,28 +53,29 @@ export const generateIncrementedName = (baseName: string, existingNames: string[
     return newName
   }
 
-  // Check if name already has a space-separated number suffix (like "Item 2")
-  const spaceNumberMatch = baseName.match(/^(.+?)(\s+)(\d+)$/)
+  // Check if name already has an underscore-separated number suffix (like "Item_2")
+  const underscoreNumberMatch = baseName.match(/^(.+?)(_)(\d+)$/)
 
-  if (spaceNumberMatch) {
-    // Name has space + number suffix, increment it
-    const [, name, space, num] = spaceNumberMatch
-    let counter = Number.parseInt(num) + 1
-    let newName = `${name}${space}${counter}`
+  if (underscoreNumberMatch) {
+    // Name has underscore + number suffix, increment it
+    const [, name, separator, numStr] = underscoreNumberMatch
+    let counter = Number.parseInt(numStr) + 1
+    const paddingLength = Math.max(numStr.length, 2) // Minimum 2 digits for consistency
+    let newName = `${name}${separator}${counter.toString().padStart(paddingLength, "0")}`
 
     while (existingNames.includes(newName)) {
       counter++
-      newName = `${name}${space}${counter}`
+      newName = `${name}${separator}${counter.toString().padStart(paddingLength, "0")}`
     }
     return newName
   } else {
-    // Name has no number suffix, start with " 2"
-    let counter = 2
-    let newName = `${baseName} ${counter}`
+    // Name has no number suffix, start with "_01" (always use underscore and zero-padding)
+    let counter = 1
+    let newName = `${baseName}_${counter.toString().padStart(2, "0")}`
 
     while (existingNames.includes(newName)) {
       counter++
-      newName = `${baseName} ${counter}`
+      newName = `${baseName}_${counter.toString().padStart(2, "0")}`
     }
     return newName
   }
@@ -97,7 +98,11 @@ export const deepClone = (obj: any): any => {
 }
 
 // File system operations
-export const updateItem = (items: FileSystemItem[], itemId: string, updates: Partial<FileSystemItem>): FileSystemItem[] => {
+export const updateItem = (
+  items: FileSystemItem[],
+  itemId: string,
+  updates: Partial<FileSystemItem>,
+): FileSystemItem[] => {
   return items.map((item) => {
     if (item.id === itemId) {
       return { ...item, ...updates }
