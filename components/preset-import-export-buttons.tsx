@@ -112,36 +112,40 @@ export function PresetImportExportButtons({ onPresetsChanged }: PresetImportExpo
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownload}
-          disabled={stats.count === 0}
-          className="h-8 text-xs hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 dark:hover:bg-emerald-950/20 bg-transparent"
-        >
-          <Download className="w-3.5 h-3.5 mr-1.5" />
-          Export
-          {stats.count > 0 && (
-            <Badge variant="secondary" className="ml-1 h-4 text-[10px]">
-              {stats.count}
-            </Badge>
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleUploadClick}
-          disabled={isUploading}
-          className="h-8 text-xs hover:bg-cyan-50 hover:border-cyan-200 hover:text-cyan-700 dark:hover:bg-cyan-950/20 bg-transparent"
-        >
-          {isUploading ? (
-            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-          ) : (
-            <Upload className="w-3.5 h-3.5 mr-1.5" />
-          )}
-          Import
-        </Button>
+      <div className="flex items-center gap-2 w-full">
+        <div className="flex-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={stats.count === 0}
+            className="w-full h-8 text-xs hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 dark:hover:bg-emerald-950/20 bg-transparent"
+          >
+            <Download className="w-3.5 h-3.5 mr-1.5" />
+            Export
+            {stats.count > 0 && (
+              <Badge variant="secondary" className="ml-1 h-4 text-[10px]">
+                {stats.count}
+              </Badge>
+            )}
+          </Button>
+        </div>
+        <div className="flex-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleUploadClick}
+            disabled={isUploading}
+            className="w-full h-8 text-xs hover:bg-cyan-50 hover:border-cyan-200 hover:text-cyan-700 dark:hover:bg-cyan-950/20 bg-transparent"
+          >
+            {isUploading ? (
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Upload className="w-3.5 h-3.5 mr-1.5" />
+            )}
+            Import
+          </Button>
+        </div>
       </div>
 
       <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileSelect} className="hidden" />

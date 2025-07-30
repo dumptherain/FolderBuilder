@@ -27,13 +27,8 @@ export const downloadAsFolder = async (
           // Create children if they exist
           if (item.children && item.children.length > 0) {
             await createStructure(item.children, folderHandle)
-          } else {
-            // Create .gitkeep for empty folders
-            const fileHandle = await folderHandle.getFileHandle(".gitkeep", { create: true })
-            const writable = await fileHandle.createWritable()
-            await writable.write("")
-            await writable.close()
           }
+          // Empty folders are created automatically, no need for .gitkeep
         } else {
           // Create file
           const fileHandle = await parentHandle.getFileHandle(item.name, { create: true })
@@ -55,13 +50,8 @@ export const downloadAsFolder = async (
           const rootFolderHandle = await dirHandle.getDirectoryHandle(rootItem.name, { create: true })
           if (rootItem.children && rootItem.children.length > 0) {
             await createStructure(rootItem.children, rootFolderHandle)
-          } else {
-            // Create .gitkeep for empty root folders
-            const fileHandle = await rootFolderHandle.getFileHandle(".gitkeep", { create: true })
-            const writable = await fileHandle.createWritable()
-            await writable.write("")
-            await writable.close()
           }
+          // Empty root folders are created automatically, no need for .gitkeep
         }
       }
     }
@@ -90,12 +80,12 @@ export const downloadAsZip = async (fileSystem: FileSystemItem[]): Promise<void>
         const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
 
         if (item.type === "folder") {
+          // Create empty folder - JSZip will handle empty folders properly
           zip.folder(itemPath)
           if (item.children && item.children.length > 0) {
             addToZip(item.children, itemPath)
-          } else {
-            zip.file(`${itemPath}/.gitkeep`, "")
           }
+          // No .gitkeep needed - empty folders are preserved in ZIP
         } else {
           zip.file(itemPath, "")
         }
@@ -113,9 +103,8 @@ export const downloadAsZip = async (fileSystem: FileSystemItem[]): Promise<void>
           zip.folder(rootItem.name)
           if (rootItem.children && rootItem.children.length > 0) {
             addToZip(rootItem.children, rootItem.name)
-          } else {
-            zip.file(`${rootItem.name}/.gitkeep`, "")
           }
+          // No .gitkeep needed - empty folders are preserved in ZIP
         }
       })
     }

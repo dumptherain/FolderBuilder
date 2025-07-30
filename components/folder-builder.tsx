@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Folder } from "lucide-react"
 import { useFileSystem } from "@/hooks/use-file-system"
 import { useDeviceDetection } from "@/hooks/use-device-detection"
-import { MobileFileSystemItem } from "@/components/mobile-file-system-item"
+import { FileSystemItemComponent } from "@/components/file-system-item"
 import { PresetSelector } from "@/components/preset-selector"
 import { StructureOutline } from "@/components/structure-outline"
 import { ActionButtons } from "@/components/action-buttons"
@@ -31,7 +31,9 @@ export default function FolderBuilder() {
   const {
     fileSystem,
     canUndo,
+    canRedo,
     handleUndo,
+    handleRedo,
     handleRename,
     handleDelete,
     handleDuplicate,
@@ -78,12 +80,10 @@ export default function FolderBuilder() {
 
   const hasFileSystemAccess = mounted && "showDirectoryPicker" in window
 
-  // Updated to check if any root folder has content
   const hasContent = useMemo(() => {
     return memoizedFileSystem.some((rootItem) => rootItem?.children?.length > 0)
   }, [memoizedFileSystem])
 
-  // Updated item count to count across all root folders
   const itemCount = useMemo(() => {
     const countItems = (items: any[]): number => {
       if (!items || items.length === 0) return 0
@@ -106,6 +106,12 @@ export default function FolderBuilder() {
     return totalCount
   }, [memoizedFileSystem])
 
+  const handleItemClick = (itemId: string) => {
+    if (itemId !== "root") {
+      handleToggleExpanded(itemId)
+    }
+  }
+
   if (!mounted) {
     return <LoadingSkeleton />
   }
@@ -118,112 +124,102 @@ export default function FolderBuilder() {
           device.isMobile || device.isTablet ? "flex flex-col" : "grid grid-cols-1 lg:grid-cols-2",
         )}
       >
-        {/* Main Builder Card */}
-        <Card className="flex flex-col w-full border-border/50 shadow-sm">
-          <CardHeader className="pb-4 space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-200/20">
-                  <Folder className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <span>Structure Builder</span>
-                  {hasContent && (
-                    <Badge variant="secondary" className="ml-2 h-5 text-xs">
-                      {itemCount} item{itemCount !== 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                </div>
-              </CardTitle>
-            </div>
-
-            <Separator />
-
-            {/* Preset Section */}
-            <div className="space-y-3">
-              <PresetSelector onPresetSelect={handlePresetSelect} refreshTrigger={presetRefreshTrigger} />
-            </div>
-
-            <Separator />
-
-            {/* Actions Section */}
-            <div className="space-y-3">
-              <span className="text-sm font-medium">Actions</span>
-              <ActionButtons
-                canUndo={canUndo}
-                onUndo={handleUndo}
-                onDownloadAsFolder={handleDownloadAsFolder}
-                onDownloadAsZip={handleDownloadAsZip}
-                hasFileSystemAccess={hasFileSystemAccess}
-                isDownloading={isDownloading}
-                hasContent={hasContent}
-                onPresetsChanged={handlePresetsChanged}
-              />
-            </div>
-          </CardHeader>
-
-          <CardContent className="flex-1 overflow-auto p-0 border-t border-border/30">
-            <div className="p-4">
-              {hasContent ? (
-                <div className="space-y-1">
-                  {memoizedFileSystem.map((item) => (
-                    <MobileFileSystemItem
-                      key={`${item.id}-${item.name}-${item.children?.length || 0}`}
-                      item={item}
-                      onToggleExpanded={handleToggleExpanded}
-                      onRename={handleRename}
-                      onDelete={handleDelete}
-                      onDuplicate={handleDuplicate}
-                      onAddItem={handleAddItem}
-                      onItemClick={handleToggleExpanded}
-                      onItemDoubleClick={(itemId, itemName) => {
-                        setRenamingId(itemId)
-                        setRenameValue(itemName)
-                      }}
-                      showQuickAdd={showQuickAdd}
-                      setShowQuickAdd={setShowQuickAdd}
-                      renamingId={renamingId}
-                      setRenamingId={setRenamingId}
-                      renameValue={renameValue}
-                      setRenameValue={setRenameValue}
-                      clickTimeouts={clickTimeouts}
-                      setClickTimeouts={setClickTimeouts}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/30 flex items-center justify-center">
-                    <Folder className="w-8 h-8 text-muted-foreground/50" />
+        {/* Main Builder Card Column */}
+        <div className="flex flex-col w-full gap-4">
+          <Card className="flex flex-col w-full border-border/50 shadow-sm min-h-[700px] flex-1">
+            <CardHeader className="pb-4 space-y-4 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                  <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-200/20">
+                    <Folder className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2 text-foreground">Ready to Build</h3>
-                  <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
-                    Start by loading a preset above or add your first folder to begin building your structure.
-                  </p>
-                  <div className="text-xs text-muted-foreground/60 bg-muted/20 rounded-lg p-3 max-w-xs mx-auto">
-                    💡 Try the "Next.js App" preset to see how it works
+                  <div>
+                    <span>Structure Builder</span>
+                    {hasContent && (
+                      <Badge variant="secondary" className="ml-2 h-5 text-xs">
+                        {itemCount} item{itemCount !== 1 ? "s" : ""}
+                      </Badge>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Preset Management Row at bottom */}
-            <div className="px-4 pb-3 border-t border-border/20 bg-muted/10">
+                </CardTitle>
+              </div>
+              <Separator />
               <div className="space-y-3">
+                <PresetSelector onPresetSelect={handlePresetSelect} refreshTrigger={presetRefreshTrigger} />
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                <ActionButtons
+                  canUndo={canUndo}
+                  canRedo={canRedo}
+                  onUndo={handleUndo}
+                  onRedo={handleRedo}
+                  hasContent={hasContent}
+                  onPresetsChanged={handlePresetsChanged}
+                  showOnlyUndoRedo={true}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col p-0 border-t border-border/30">
+              <div className="flex-1 p-4">
+                {hasContent ? (
+                  <div className="space-y-1">
+                    {memoizedFileSystem.map((item) => (
+                      <FileSystemItemComponent
+                        key={`${item.id}-${item.name}-${item.children?.length || 0}`}
+                        item={item}
+                        onToggleExpanded={handleToggleExpanded}
+                        onRename={handleRename}
+                        onDelete={handleDelete}
+                        onDuplicate={handleDuplicate}
+                        onAddItem={handleAddItem}
+                        onItemClick={handleItemClick}
+                        onItemDoubleClick={(itemId, itemName) => {
+                          setRenamingId(itemId)
+                          setRenameValue(itemName)
+                        }}
+                        showQuickAdd={showQuickAdd}
+                        setShowQuickAdd={setShowQuickAdd}
+                        renamingId={renamingId}
+                        setRenamingId={setRenamingId}
+                        renameValue={renameValue}
+                        setRenameValue={setRenameValue}
+                        clickTimeouts={clickTimeouts}
+                        setClickTimeouts={setClickTimeouts}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/30 flex items-center justify-center">
+                      <Folder className="w-8 h-8 text-muted-foreground/50" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">Ready to Build</h3>
+                    <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
+                      Start by loading a preset above or add your first folder to begin building your structure.
+                    </p>
+                    <div className="text-xs text-muted-foreground/60 bg-muted/20 rounded-lg p-3 max-w-xs mx-auto">
+                      💡 Try the "Next.js App" preset to see how it works
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/50 shadow-sm">
+            <CardContent className="px-4 py-3 flex items-center min-h-[80px]">
+              <div className="w-full space-y-3">
                 <div className="flex items-center gap-2">
                   <Separator className="flex-1" />
                   <span className="text-xs font-medium text-muted-foreground">PRESET MANAGEMENT</span>
                   <Separator className="flex-1" />
                 </div>
-                <div className="flex items-center justify-center w-full">
+                <div className="w-full">
                   <ActionButtons
                     canUndo={false}
+                    canRedo={false}
                     onUndo={() => {}}
-                    onDownloadAsFolder={() => {}}
-                    onDownloadAsZip={() => {}}
-                    hasFileSystemAccess={false}
-                    isDownloading={false}
+                    onRedo={() => {}}
                     hasContent={hasContent}
                     onPresetsChanged={handlePresetsChanged}
                     onSavePreset={handleSavePreset}
@@ -231,29 +227,19 @@ export default function FolderBuilder() {
                   />
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            {/* Instructions at bottom */}
-            <div className="px-4 pb-3 border-t border-border/20 bg-muted/20">
-              <p className="text-[10px] text-muted-foreground/60 text-center">
-                {device.isMobile || device.isTablet ? (
-                  <>
-                    <strong>Tap</strong> folders to expand • <strong>Long press</strong> to rename • Use{" "}
-                    <strong>menu</strong> for actions
-                  </>
-                ) : (
-                  <>
-                    <strong>Click</strong> to expand • <strong>Double-click</strong> to rename • <strong>Hover</strong>{" "}
-                    for actions
-                  </>
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Structure Outline */}
-        <StructureOutline fileSystem={memoizedFileSystem} />
+        {/* Structure Outline Column */}
+        <StructureOutline
+          fileSystem={memoizedFileSystem}
+          onDownloadAsFolder={handleDownloadAsFolder}
+          onDownloadAsZip={handleDownloadAsZip}
+          hasFileSystemAccess={hasFileSystemAccess}
+          isDownloading={isDownloading}
+          hasContent={hasContent}
+        />
       </div>
 
       <SavePresetDialog

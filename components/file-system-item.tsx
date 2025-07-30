@@ -1,36 +1,25 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { FileSystemItem } from "@/types/folder"
+import type React from "react"
+import { useRef, useEffect, useState } from "react"
+import type { FileSystemItem } from "@/types/folder"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Folder,
-  File,
-  Plus,
-  Trash2,
-  ChevronRight,
-  ChevronDown,
-  FolderOpen,
-  Copy,
-} from "lucide-react"
+import { Folder, File, Plus, Trash2, ChevronRight, ChevronDown, FolderOpen, Copy } from "lucide-react"
 
 interface FileSystemItemProps {
   item: FileSystemItem
   level?: number
   onToggleExpanded: (id: string) => void
-  onRename: (id: string, newName: string) => void
+  onRename: (id: string, newName: string) => boolean
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
   onAddItem: (parentId: string, type: "file" | "folder", name: string) => void
   onItemClick: (itemId: string) => void
-  onItemDoubleClick: (itemId: string, itemName: string) => void
   showQuickAdd: string | null
   setShowQuickAdd: (id: string | null) => void
   renamingId: string | null
   setRenamingId: (id: string | null) => void
-  renameValue: string
-  setRenameValue: (value: string) => void
   clickTimeouts: Map<string, NodeJS.Timeout>
   setClickTimeouts: React.Dispatch<React.SetStateAction<Map<string, NodeJS.Timeout>>>
 }
@@ -44,24 +33,23 @@ export function FileSystemItemComponent({
   onDuplicate,
   onAddItem,
   onItemClick,
-  onItemDoubleClick,
   showQuickAdd,
   setShowQuickAdd,
   renamingId,
   setRenamingId,
-  renameValue,
-  setRenameValue,
   clickTimeouts,
   setClickTimeouts,
 }: FileSystemItemProps) {
   const renameInputRef = useRef<HTMLInputElement>(null)
+  const [renameValue, setRenameValue] = useState("")
 
   useEffect(() => {
     if (renamingId === item.id && renameInputRef.current) {
+      setRenameValue(item.name)
       renameInputRef.current.focus()
       renameInputRef.current.select()
     }
-  }, [renamingId, item.id])
+  }, [renamingId, item.id, item.name])
 
   const handleItemClick = () => {
     if (clickTimeouts.has(item.id)) {
@@ -110,15 +98,29 @@ export function FileSystemItemComponent({
     setRenameValue(item.name)
   }
 
-  const handleRename = () => {
-    onRename(item.id, renameValue)
+  const handleRenameCommit = () => {
+    if (renameValue.trim() && renameValue.trim() !== item.name) {
+      const success = onRename(item.id, renameValue)
+      if (success) {
+        setRenamingId(null)
+      }
+      // If rename failed, keep the input open for user to try again
+    } else {
+      // If no change or empty, just cancel
+      setRenamingId(null)
+    }
+  }
+
+  const handleRenameCancel = () => {
     setRenamingId(null)
+    setRenameValue(item.name)
   }
 
   const quickAddItem = (type: "file" | "folder") => {
-    const input = document.querySelector(`input[placeholder="Enter name..."]`) as HTMLInputElement
-    if (input?.value) {
-      onAddItem(item.id, type, input.value)
+    const container = document.querySelector(`[data-quick-add="${item.id}"]`)
+    const input = container?.querySelector('input[placeholder="Enter name..."]') as HTMLInputElement
+    if (input?.value.trim()) {
+      onAddItem(item.id, type, input.value.trim())
       setShowQuickAdd(null)
     }
   }
@@ -129,11 +131,15 @@ export function FileSystemItemComponent({
         className="group flex items-center gap-2.5 px-3 py-2 hover:bg-accent/40 rounded-lg transition-all duration-150 min-h-[40px] cursor-pointer"
         style={{ paddingLeft: `${Math.min(level * 20, 60) + 12}px` }}
         onClick={() => {
-          if (item.type === "folder") {
+          if (item.type === "folder" && renamingId !== item.id) {
             handleItemClick()
           }
         }}
-        onDoubleClick={() => handleItemDoubleClick()}
+        onDoubleClick={() => {
+          if (renamingId !== item.id) {
+            handleItemDoubleClick()
+          }
+        }}
       >
         {item.type === "folder" && (
           <button
@@ -168,17 +174,22 @@ export function FileSystemItemComponent({
             type="text"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
-            onBlur={handleRename}
+            onBlur={handleRenameCommit}
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleRename()
-              if (e.key === "Escape") setRenamingId(null)
+              e.stopPropagation()
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleRenameCommit()
+              }
+              if (e.key === "Escape") {
+                e.preventDefault()
+                handleRenameCancel()
+              }
             }}
             className="h-7 text-sm flex-1 min-w-0 rounded-md border-0 bg-muted/30 px-2 py-1 focus:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-border"
           />
         ) : (
-          <span className="flex-1 text-sm truncate cursor-pointer min-w-0 py-0.5 text-foreground/90">
-            {item.name}
-          </span>
+          <span className="flex-1 text-sm truncate cursor-pointer min-w-0 py-0.5 text-foreground/90">{item.name}</span>
         )}
 
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
@@ -194,16 +205,18 @@ export function FileSystemItemComponent({
               <Plus className="w-3.5 h-3.5 text-blue-500/70" />
             </button>
           )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDuplicate(item.id)
-            }}
-            className="p-1 hover:bg-green-500/10 rounded transition-colors"
-            title="Duplicate item"
-          >
-            <Copy className="w-3.5 h-3.5 text-green-500/70" />
-          </button>
+          {item.id !== "root" && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDuplicate(item.id)
+              }}
+              className="p-1 hover:bg-green-500/10 rounded transition-colors"
+              title="Duplicate item"
+            >
+              <Copy className="w-3.5 h-3.5 text-green-500/70" />
+            </button>
+          )}
           {item.id !== "root" && (
             <button
               onClick={(e) => {
@@ -223,6 +236,7 @@ export function FileSystemItemComponent({
         <div
           className="content-area p-3 rounded-lg mx-3 mb-2"
           style={{ marginLeft: `${Math.min(level * 20, 60) + 36}px` }}
+          data-quick-add={item.id}
         >
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
             <Input
@@ -233,17 +247,16 @@ export function FileSystemItemComponent({
                 if (e.key === "Enter") {
                   e.preventDefault()
                   const target = e.target as HTMLInputElement
-                  if (target.value) onAddItem(item.id, "folder", target.value)
+                  if (target.value.trim()) {
+                    onAddItem(item.id, "folder", target.value.trim())
+                    setShowQuickAdd(null)
+                  }
                 }
                 if (e.key === "Escape") setShowQuickAdd(null)
               }}
             />
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="h-8 flex-1 sm:flex-none text-xs"
-                onClick={() => quickAddItem("folder")}
-              >
+              <Button size="sm" className="h-8 flex-1 sm:flex-none text-xs" onClick={() => quickAddItem("folder")}>
                 <Folder className="w-3 h-3 mr-1.5" />
                 Folder
               </Button>
@@ -274,13 +287,10 @@ export function FileSystemItemComponent({
               onDuplicate={onDuplicate}
               onAddItem={onAddItem}
               onItemClick={onItemClick}
-              onItemDoubleClick={onItemDoubleClick}
               showQuickAdd={showQuickAdd}
               setShowQuickAdd={setShowQuickAdd}
               renamingId={renamingId}
               setRenamingId={setRenamingId}
-              renameValue={renameValue}
-              setRenameValue={setRenameValue}
               clickTimeouts={clickTimeouts}
               setClickTimeouts={setClickTimeouts}
             />
