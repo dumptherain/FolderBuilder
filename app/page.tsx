@@ -22,11 +22,15 @@ export default function Home() {
       </header>
 
       <div className="max-w-7xl mx-auto p-6 lg:p-8">
-        <div className="flex gap-6 h-[calc(100vh-212px)]">
+        <div className="flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-212px)]">
           <div className="flex-1 min-w-0">
             <FolderBuilder />
           </div>
-          <TipsPanel />
+
+          {/* Tips panel - below content on mobile/tablet, sidebar on desktop */}
+          <div className="lg:w-80 order-last lg:order-none">
+            <TipsPanel />
+          </div>
         </div>
       </div>
 

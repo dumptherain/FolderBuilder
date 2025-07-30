@@ -4,13 +4,15 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Folder } from "lucide-react"
 import { useFileSystem } from "@/hooks/use-file-system"
-import { FileSystemItemComponent } from "@/components/file-system-item"
+import { useDeviceDetection } from "@/hooks/use-device-detection"
+import { MobileFileSystemItem } from "@/components/mobile-file-system-item"
 import { PresetSelector } from "@/components/preset-selector"
 import { StructureOutline } from "@/components/structure-outline"
 import { ActionButtons } from "@/components/action-buttons"
 import { LoadingSkeleton } from "@/components/loading-skeleton"
 import { downloadAsFolder, downloadAsZip } from "@/lib/download-utils"
-import { FolderPreset } from "@/types/folder"
+import { cn } from "@/lib/utils"
+import type { FolderPreset } from "@/types/folder"
 
 export default function FolderBuilder() {
   const [mounted, setMounted] = useState(false)
@@ -20,6 +22,7 @@ export default function FolderBuilder() {
   const [renameValue, setRenameValue] = useState("")
   const [clickTimeouts, setClickTimeouts] = useState<Map<string, NodeJS.Timeout>>(new Map())
 
+  const device = useDeviceDetection()
   const {
     fileSystem,
     canUndo,
@@ -62,7 +65,9 @@ export default function FolderBuilder() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+    <div
+      className={cn("gap-6", device.isMobile || device.isTablet ? "flex flex-col" : "grid grid-cols-1 lg:grid-cols-2")}
+    >
       <Card className="refined-card flex flex-col">
         <CardHeader className="pb-4 border-b border-border/30">
           <div className="flex items-center justify-between mb-3">
@@ -71,13 +76,15 @@ export default function FolderBuilder() {
               Structure Builder
             </CardTitle>
           </div>
-          <p className="text-xs text-muted-foreground/80">
-            Click to expand • Double-click to rename • Hover to add or delete • Ctrl+Z to undo
+
+          <p className={cn("text-muted-foreground/80", device.isMobile ? "text-xs" : "text-xs hidden sm:block")}>
+            {device.isMobile || device.isTablet
+              ? "Tap to expand • Long press to rename"
+              : "Click to expand • Double-click to rename • Hover to add or delete • Ctrl+Z to undo"}
           </p>
 
           <div className="flex flex-col gap-2.5 pt-3">
             <PresetSelector onPresetSelect={handlePresetSelect} />
-
             <ActionButtons
               canUndo={canUndo}
               onUndo={handleUndo}
@@ -89,10 +96,11 @@ export default function FolderBuilder() {
             />
           </div>
         </CardHeader>
+
         <CardContent className="flex-1 overflow-auto p-0">
           <div className="p-2">
             {fileSystem.map((item) => (
-              <FileSystemItemComponent
+              <MobileFileSystemItem
                 key={item.id}
                 item={item}
                 onToggleExpanded={handleToggleExpanded}

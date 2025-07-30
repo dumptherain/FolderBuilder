@@ -201,4 +201,4 @@ export const generateOutline = (structure: FileSystemItem[]): string => {
     buildTree(structure[0].children, "")
   }
   return treeString
-} 
+}

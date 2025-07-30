@@ -2,10 +2,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Folder, File } from "lucide-react"
+import { useDeviceDetection } from "@/hooks/use-device-detection"
+import { cn } from "@/lib/utils"
 
 export function LoadingSkeleton() {
+  const device = useDeviceDetection()
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+    <div
+      className={cn("gap-6", device.isMobile || device.isTablet ? "flex flex-col" : "grid grid-cols-1 lg:grid-cols-2")}
+    >
       <Card className="refined-card flex flex-col">
         <CardHeader className="pb-4 border-b border-border/30">
           <div className="flex items-center justify-between mb-3">
@@ -23,7 +29,7 @@ export function LoadingSkeleton() {
         <CardContent className="flex-1 overflow-auto p-4">
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-10 bg-muted/50 rounded animate-pulse" />
+              <div key={i} className={cn("bg-muted/50 rounded animate-pulse", device.isMobile ? "h-12" : "h-10")} />
             ))}
           </div>
         </CardContent>
@@ -42,7 +48,7 @@ export function LoadingSkeleton() {
               <div
                 key={i}
                 className="h-4 bg-muted/50 rounded animate-pulse"
-                style={{ width: `${65 + (i * 3) % 30}%` }}
+                style={{ width: `${60 + Math.random() * 40}%` }}
               />
             ))}
           </div>
@@ -50,4 +56,4 @@ export function LoadingSkeleton() {
       </Card>
     </div>
   )
-} 
+}

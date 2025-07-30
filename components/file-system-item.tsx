@@ -289,4 +289,4 @@ export function FileSystemItemComponent({
       )}
     </div>
   )
-} 
+}

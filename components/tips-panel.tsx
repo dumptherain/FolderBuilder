@@ -1,115 +1,146 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Lightbulb, X, Folder, File, Copy, Trash2, Plus } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { ChevronDown, ChevronUp, Lightbulb, Keyboard, Mouse, Smartphone } from "lucide-react"
+import { useDeviceDetection } from "@/hooks/use-device-detection"
+import { TouchOptimizedButton } from "./touch-optimized-button"
+import { cn } from "@/lib/utils"
 
 export function TipsPanel() {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const device = useDeviceDetection()
 
   const tips = [
     {
-      icon: <Folder className="w-4 h-4 text-blue-500" />,
-      title: "Quick Add",
-      description: "Click the + icon on any folder to quickly add files or subfolders",
+      icon: device.isTouch ? Smartphone : Mouse,
+      title: device.isTouch ? "Touch Controls" : "Mouse Controls",
+      items: device.isTouch
+        ? [
+            "Tap to expand/collapse folders",
+            "Long press to rename items",
+            "Tap + to add new items",
+            "Swipe for quick actions",
+          ]
+        : [
+            "Single click to expand/collapse",
+            "Double click to rename",
+            "Right click for context menu",
+            "Drag to reorder items",
+          ],
     },
     {
-      icon: <File className="w-4 h-4 text-green-500" />,
-      title: "Double-Click Rename",
-      description: "Double-click any item name to rename it instantly",
-    },
-    {
-      icon: <Copy className="w-4 h-4 text-purple-500" />,
-      title: "Duplicate Items",
-      description: "Use the copy icon to duplicate files or entire folder structures",
-    },
-    {
-      icon: <Trash2 className="w-4 h-4 text-red-500" />,
-      title: "Smart Delete",
-      description: "Delete items with the trash icon - folders and all contents will be removed",
-    },
-    {
-      icon: <Plus className="w-4 h-4 text-orange-500" />,
+      icon: Keyboard,
       title: "Keyboard Shortcuts",
-      description: "Press Enter to confirm additions, Escape to cancel operations",
+      items: [
+        "Ctrl/Cmd + Z: Undo last action",
+        "Ctrl/Cmd + S: Save preset",
+        "Ctrl/Cmd + O: Load preset",
+        "Delete: Remove selected item",
+      ],
+    },
+    {
+      icon: Lightbulb,
+      title: "Pro Tips",
+      items: [
+        "Use presets for common structures",
+        "Export as ZIP for easy sharing",
+        "Nested folders create hierarchy",
+        "File extensions are preserved",
+      ],
     },
   ]
 
-  return (
-    <div className={`flex-shrink-0 transition-all duration-500 ease-in-out ${isExpanded ? "w-80" : "w-16"}`}>
-      <div className="relative h-full">
-        {/* Collapsed State - Button */}
-        <div
-          className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-            isExpanded ? "opacity-0 scale-95 translate-x-1 pointer-events-none" : "opacity-100 scale-100 translate-x-0"
-          }`}
-        >
-          <Button
-            onClick={() => setIsExpanded(true)}
-            variant="outline"
-            size="sm"
-            className="w-16 h-16 rounded-xl border-2 border-dashed border-border/50 hover:border-border bg-background/50 backdrop-blur-sm hover:bg-accent/50 transition-all duration-200 flex flex-col items-center justify-center gap-1"
-          >
-            <Lightbulb className="w-5 h-5 text-yellow-500" />
-            <span className="text-xs text-muted-foreground">Tips</span>
-          </Button>
-        </div>
-
-        {/* Expanded State - Panel */}
-        <div
-          className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-            isExpanded ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-95 -translate-x-1 pointer-events-none"
-          }`}
-        >
-          <Card className="h-full border-border/50 bg-background/95 backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b border-border/30">
+  // On mobile/tablet, show as collapsible card
+  if (device.isMobile || device.isTablet) {
+    return (
+      <Card className="w-full">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
               <div className="flex items-center justify-between">
                 <CardTitle
-                  className={`flex items-center gap-2 text-sm font-medium transition-opacity duration-500 ease-out ${
-                    isExpanded ? "opacity-100 delay-500" : "opacity-0 duration-150"
-                  }`}
+                  className={cn("flex items-center gap-2", device.isMobile && "text-lg", device.isTablet && "text-xl")}
                 >
-                  <Lightbulb className="w-4 h-4 text-yellow-500" />
-                  Quick Tips
+                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                  Tips & Shortcuts
                 </CardTitle>
-                <Button
-                  onClick={() => setIsExpanded(false)}
-                  variant="ghost"
-                  size="sm"
-                  className={`h-6 w-6 p-0 hover:bg-accent/50 transition-opacity duration-500 ease-out ${
-                    isExpanded ? "opacity-100 delay-500" : "opacity-0 duration-150"
-                  }`}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </Button>
+                <TouchOptimizedButton variant="ghost" size="sm" className="h-8 w-8 p-0" touchTarget="medium">
+                  {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </TouchOptimizedButton>
               </div>
             </CardHeader>
-            <CardContent
-              className={`p-4 space-y-4 overflow-y-auto transition-opacity duration-700 ease-out ${
-                isExpanded ? "opacity-100 delay-700" : "opacity-0 duration-150"
-              }`}
-            >
-              {tips.map((tip, index) => (
-                <div
-                  key={index}
-                  className="flex gap-3 p-3 rounded-lg bg-accent/20 hover:bg-accent/30 transition-colors"
-                >
-                  <div className="flex-shrink-0 mt-0.5">{tip.icon}</div>
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-medium text-foreground mb-1">{tip.title}</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{tip.description}</p>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <div className="space-y-6">
+                {tips.map((section, index) => (
+                  <div key={index}>
+                    <h4
+                      className={cn(
+                        "font-medium mb-3 flex items-center gap-2",
+                        device.isMobile && "text-base",
+                        device.isTablet && "text-lg",
+                      )}
+                    >
+                      <section.icon className="h-4 w-4 text-muted-foreground" />
+                      {section.title}
+                    </h4>
+                    <ul className="space-y-2">
+                      {section.items.map((tip, tipIndex) => (
+                        <li
+                          key={tipIndex}
+                          className={cn(
+                            "text-muted-foreground flex items-start gap-2",
+                            device.isMobile && "text-sm",
+                            device.isTablet && "text-base",
+                          )}
+                        >
+                          <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full mt-2 flex-shrink-0" />
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
-              ))}
-
-              <div className="pt-2 border-t border-border/30">
-                <div className="text-xs text-muted-foreground/70 text-center">💡 More features coming soon!</div>
+                ))}
               </div>
             </CardContent>
-          </Card>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    )
+  }
+
+  // On desktop, show as always-visible sidebar
+  return (
+    <Card className="h-fit sticky top-4">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Lightbulb className="h-5 w-5 text-yellow-500" />
+          Tips & Shortcuts
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {tips.map((section, index) => (
+            <div key={index}>
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <section.icon className="h-4 w-4 text-muted-foreground" />
+                {section.title}
+              </h4>
+              <ul className="space-y-2">
+                {section.items.map((tip, tipIndex) => (
+                  <li key={tipIndex} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full mt-2 flex-shrink-0" />
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

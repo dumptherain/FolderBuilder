@@ -1,7 +1,9 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Archive, FolderDown, Undo } from "lucide-react"
+import { Undo, FolderDown, Archive } from "lucide-react"
+import { useDeviceDetection } from "@/hooks/use-device-detection"
+import { cn } from "@/lib/utils"
 
 interface ActionButtonsProps {
   canUndo: boolean
@@ -22,29 +24,34 @@ export function ActionButtons({
   isDownloading,
   hasContent,
 }: ActionButtonsProps) {
+  const device = useDeviceDetection()
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+    <div className={cn("grid gap-2", device.isMobile ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-3")}>
       <Button
         onClick={onUndo}
         size="sm"
         variant="outline"
-        className="flex items-center gap-1.5 h-8 text-xs bg-transparent border-border/50 justify-center"
+        className={cn(
+          "flex items-center gap-1.5 text-xs bg-transparent border-border/50 justify-center",
+          device.isMobile ? "h-10" : "h-8",
+        )}
         disabled={!canUndo}
-        title={`Undo ${canUndo ? "" : ""}`}
+        title={canUndo ? "Undo last action" : "Nothing to undo"}
       >
-        <Undo className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline lg:hidden xl:inline">Undo</span>
+        <Undo className={cn(device.isMobile ? "w-4 h-4" : "w-3.5 h-3.5")} />
+        <span className={device.isMobile ? "inline" : "hidden sm:inline lg:hidden xl:inline"}>Undo</span>
       </Button>
 
       {hasFileSystemAccess && (
         <Button
           onClick={onDownloadAsFolder}
           size="sm"
-          className="flex items-center gap-1.5 h-8 text-xs justify-center"
+          className={cn("flex items-center gap-1.5 text-xs justify-center", device.isMobile ? "h-10" : "h-8")}
           disabled={!hasContent || isDownloading}
         >
-          <FolderDown className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline lg:hidden xl:inline">
+          <FolderDown className={cn(device.isMobile ? "w-4 h-4" : "w-3.5 h-3.5")} />
+          <span className={device.isMobile ? "inline" : "hidden sm:inline lg:hidden xl:inline"}>
             {isDownloading ? "Creating..." : "Save"}
           </span>
         </Button>
@@ -54,12 +61,15 @@ export function ActionButtons({
         onClick={onDownloadAsZip}
         size="sm"
         variant="outline"
-        className="flex items-center gap-1.5 bg-transparent border-border/50 h-8 text-xs justify-center"
+        className={cn(
+          "flex items-center gap-1.5 bg-transparent border-border/50 text-xs justify-center",
+          device.isMobile ? "h-10" : "h-8",
+        )}
         disabled={!hasContent}
       >
-        <Archive className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline lg:hidden xl:inline">ZIP</span>
+        <Archive className={cn(device.isMobile ? "w-4 h-4" : "w-3.5 h-3.5")} />
+        <span className={device.isMobile ? "inline" : "hidden sm:inline lg:hidden xl:inline"}>ZIP</span>
       </Button>
     </div>
   )
-} 
+}

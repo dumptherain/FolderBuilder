@@ -102,4 +102,4 @@ export const downloadAsZip = async (fileSystem: FileSystemItem[]): Promise<void>
     console.error("Error creating zip file:", error)
     alert("Error creating folder structure. Please try again.")
   }
-} 
+}

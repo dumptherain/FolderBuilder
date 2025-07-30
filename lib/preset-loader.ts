@@ -62,4 +62,4 @@ export const getPresetByValue = async (value: string): Promise<FolderPreset | nu
 export const getPresetsByCategory = async (category: string): Promise<FolderPreset[]> => {
   const allPresets = await getAllPresets()
   return allPresets[category] || []
-} 
+}
