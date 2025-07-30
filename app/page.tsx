@@ -14,8 +14,8 @@ export default function Home() {
                   <span className="text-white dark:text-slate-900 font-semibold text-xs">FS</span>
                 </div>
                 <h1 className="text-lg font-medium text-foreground">Folder Structure Builder</h1>
-                </div>
               </div>
+            </div>
             <ThemeToggle />
           </div>
         </div>
@@ -34,7 +34,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span>Built by</span>
+              <span>Vibe coded by</span>
               <a
                 href="https://www.pascalwiemers.com"
                 target="_blank"
