@@ -9,7 +9,7 @@ const presetModules: Record<string, () => Promise<any>> = {
   "react-app": () => import("../data/presets/react-app.json"),
   "nextjs-app": () => import("../data/presets/nextjs-app.json"),
   "node-api": () => import("../data/presets/node-api.json"),
-  "video-production": () => import("../data/presets/video-production.json"),
+  "video-production": () => import("../data/presets/video-production-copy.json"),
   cgi: () => import("../data/presets/cgi.json"),
 }
 

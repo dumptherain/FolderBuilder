@@ -50,7 +50,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="font-medium text-foreground hover:text-primary transition-colors"
               >
-                Pascal Wiemers
+                Pascal M. Wiemers
               </a>
             </div>
             <a
