@@ -1,6 +1,9 @@
 {
-  "name": "Video Production Copy",
+  "value": "video-production",
+  "label": "Video Production Copy",
+  "category": "Video Production",
   "description": "Comprehensive video production workflow structure (copy)",
+  "rootName": "video-production",
   "structure": [
     {
       "name": "01_PRE_PRODUCTION",

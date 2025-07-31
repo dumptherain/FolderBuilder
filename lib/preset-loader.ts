@@ -1,4 +1,4 @@
-import type { FolderPreset, FolderPresetCategory } from "@/types/folder"
+import type { FolderPreset, PresetCategory } from "@/types/folder"
 import { getTemporaryPresets, initializeTemporaryPresets } from "./temporary-preset-manager"
 
 // A map of preset keys to dynamic import functions.
@@ -49,8 +49,8 @@ export const loadPreset = async (presetValue: string): Promise<FolderPreset | nu
  * @returns A promise that resolves to an object where keys are category names
  *          and values are arrays of FolderPreset objects.
  */
-export const getAllPresets = async (): Promise<FolderPresetCategory> => {
-  const presets: FolderPresetCategory = {}
+export const getAllPresets = async (): Promise<Record<string, FolderPreset[]>> => {
+  const presets: Record<string, FolderPreset[]> = {}
 
   try {
     // Ensure temporary presets from localStorage are initialized.
@@ -68,6 +68,19 @@ export const getAllPresets = async (): Promise<FolderPresetCategory> => {
           presets[category] = []
         }
         presets[category].push(preset)
+      }
+    })
+
+    // Sort presets within each category to prioritize CGI preset
+    Object.keys(presets).forEach((category) => {
+      if (presets[category]) {
+        presets[category].sort((a: FolderPreset, b: FolderPreset) => {
+          // Put CGI preset first
+          if (a.value === "cgi") return -1
+          if (b.value === "cgi") return 1
+          // Then sort alphabetically by label
+          return a.label.localeCompare(b.label)
+        })
       }
     })
 

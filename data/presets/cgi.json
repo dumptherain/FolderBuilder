@@ -1,6 +1,9 @@
 {
-  "name": "CGI Production",
-  "description": "Complete CGI production pipeline structure",
+  "value": "cgi",
+  "label": "CGI Production",
+  "category": "Video Production",
+  "description": "Complete CGI production pipeline structure for 3D animation and visual effects",
+  "rootName": "cgi-production",
   "structure": [
     {
       "name": "01_PRE_PRODUCTION",
