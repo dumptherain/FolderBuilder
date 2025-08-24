@@ -1,16 +1,17 @@
 import type { FolderPreset, PresetCategory } from "@/types/folder"
 import { getTemporaryPresets, initializeTemporaryPresets } from "./temporary-preset-manager"
+import { parseIndentedPreset } from "@/lib/preset-text"
 
 // A map of preset keys to dynamic import functions.
 // Using relative paths to ensure compatibility with different environments
 // and to resolve the module loading error.
 const presetModules: Record<string, () => Promise<any>> = {
-  empty: () => import("../data/presets/empty.json"),
-  "react-app": () => import("../data/presets/react-app.json"),
-  "nextjs-app": () => import("../data/presets/nextjs-app.json"),
-  "node-api": () => import("../data/presets/node-api.json"),
-  "video-production": () => import("../data/presets/video-production-copy.json"),
-  cgi: () => import("../data/presets/cgi.json"),
+  empty: () => import("../data/presets/empty.preset.txt"),
+  "react-app": () => import("../data/presets/react-app.preset.txt"),
+  "nextjs-app": () => import("../data/presets/nextjs-app.preset.txt"),
+  "node-api": () => import("../data/presets/node-api.preset.txt"),
+  "video-production": () => import("../data/presets/video-production-copy.preset.txt"),
+  cgi: () => import("../data/presets/cgi.preset.txt"),
 }
 
 /**
@@ -36,8 +37,41 @@ export const loadPreset = async (presetValue: string): Promise<FolderPreset | nu
 
     const presetModule = await moduleLoader()
     // The JSON module is typically imported with a `default` property.
-    const preset = presetModule.default || presetModule
-    return preset
+    const raw = (presetModule.default || presetModule) as any
+
+    // If importing a raw text asset (from .preset.txt), it's a string
+    if (typeof raw === "string") {
+      const parsed = parseIndentedPreset(raw)
+      return parsed
+    }
+
+    // If a compact indented text representation is present, parse and build structure from it
+    const textField: string | string[] | undefined = (raw as any)?.text
+    const textAsString = Array.isArray(textField)
+      ? textField.join("\n")
+      : typeof textField === "string"
+        ? textField
+        : undefined
+
+    if (typeof textAsString === "string" && textAsString.trim().length > 0) {
+      try {
+        const parsed = parseIndentedPreset(textAsString)
+        const merged: FolderPreset = {
+          value: raw.value ?? parsed.value,
+          label: raw.label ?? parsed.label,
+          category: raw.category ?? parsed.category,
+          description: raw.description ?? parsed.description,
+          rootName: raw.rootName ?? parsed.rootName,
+          structure: parsed.structure,
+        }
+        return merged
+      } catch (e) {
+        console.warn(`Failed to parse text preset for ${presetValue}, falling back to JSON structure.`)
+      }
+    }
+
+    // Fallback to regular JSON structure
+    return raw as FolderPreset
   } catch (error) {
     console.error(`Failed to load preset "${presetValue}":`, error)
     return null

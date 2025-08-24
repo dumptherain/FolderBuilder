@@ -1,0 +1,3 @@
+root: root
+category: Minimal
+description: Creates a single root folder with no content

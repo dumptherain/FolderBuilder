@@ -1,0 +1,72 @@
+root: video-production
+category: Video Production
+description: Comprehensive video production workflow structure (copy)
+
+01_PRE_PRODUCTION/
+  scripts/
+  storyboards/
+  shot_lists/
+  location_scouting/
+  casting/
+  scheduling/
+  budgets/
+  contracts/
+02_PRODUCTION/
+  footage/
+    camera_a/
+    camera_b/
+    camera_c/
+    drone/
+    backup/
+  audio/
+    dialogue/
+    ambient/
+    music/
+    sfx/
+  photos/
+  documents/
+  call_sheets/
+03_POST_PRODUCTION/
+  editing/
+    project_files/
+    sequences/
+    rough_cuts/
+    fine_cuts/
+    final_cut/
+  color_grading/
+    luts/
+    grades/
+    references/
+  audio_post/
+    mixing/
+    mastering/
+    stems/
+  vfx/
+    compositing/
+    motion_graphics/
+    3d_elements/
+  titles_graphics/
+04_ASSETS/
+  logos/
+  graphics/
+  stock_footage/
+  stock_music/
+  fonts/
+  templates/
+05_DELIVERY/
+  masters/
+    4k/
+    1080p/
+    720p/
+  versions/
+    director_cut/
+    client_versions/
+    social_media/
+    broadcast/
+  subtitles/
+  closed_captions/
+06_ARCHIVE/
+  project_backup/
+  raw_footage_archive/
+  documentation/
+  client_communication/

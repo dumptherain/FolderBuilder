@@ -13,6 +13,11 @@ const nextConfig = {
       test: /\.json$/,
       type: 'json',
     })
+    // Allow importing raw text presets
+    config.module.rules.push({
+      test: /\.preset\.txt$/i,
+      type: 'asset/source',
+    })
     return config
   },
 }

@@ -123,7 +123,7 @@ export function PresetSelector({ onPresetSelect, refreshTrigger }: PresetSelecto
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[320px] p-0 border-border/50">
+        <PopoverContent className="min-w-[var(--radix-popover-trigger-width)] w-[calc(var(--radix-popover-trigger-width)+200px)] max-w-[500px] p-0 border-border/50" align="start">
           <Command>
             <CommandInput placeholder="Search presets..." className="h-8 text-xs" />
             <CommandList>

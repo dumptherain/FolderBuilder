@@ -1,0 +1,19 @@
+root: my-react-app
+category: Web Development
+description: Standard React application structure with components, hooks, and utilities
+
+src/
+  components/
+  hooks/
+  utils/
+  styles/
+  App.tsx
+  index.tsx
+public/
+  images/
+  fonts/
+tests/
+  unit/
+  integration/
+package.json
+README.md

@@ -1,0 +1,96 @@
+root: cgi-production
+category: Video Production
+description: Complete CGI production pipeline structure for 3D animation and visual effects
+
+01_PRE_PRODUCTION/
+  concept_art/
+    characters/
+    environments/
+    props/
+    vehicles/
+  storyboards/
+    animatics/
+    previs/
+  references/
+    photo_ref/
+    video_ref/
+    style_ref/
+  scripts/
+  schedules/
+
+02_ASSETS/
+  models/
+    characters/
+    environments/
+    props/
+    vehicles/
+  textures/
+    diffuse/
+    normal/
+    specular/
+    displacement/
+    hdri/
+  materials/
+    shaders/
+    substance/
+  rigs/
+    character_rigs/
+    facial_rigs/
+    vehicle_rigs/
+
+03_SCENES/
+  layout/
+    cameras/
+    lighting_setup/
+  animation/
+    character_anim/
+    camera_anim/
+    fx_anim/
+  lighting/
+    master_lighting/
+    shot_lighting/
+  fx/
+    particles/
+    simulations/
+    dynamics/
+
+04_RENDERING/
+  render_layers/
+    beauty/
+    shadows/
+    reflections/
+    ambient_occlusion/
+  passes/
+    diffuse/
+    specular/
+    normal/
+    depth/
+    motion_vectors/
+  render_settings/
+  farm_scripts/
+
+05_COMPOSITING/
+  nuke_scripts/
+    templates/
+    shot_comps/
+  plates/
+    live_action/
+    green_screen/
+  mattes/
+  color_correction/
+
+06_OUTPUT/
+  final_renders/
+    exr/
+    jpg/
+    png/
+  deliverables/
+    client_review/
+    final_delivery/
+  archive/
+
+07_PIPELINE/
+  tools/
+  scripts/
+  configs/
+  documentation/

@@ -1,4 +1,5 @@
 import type { FileSystemItem } from "@/types/folder"
+import { generateId } from "@/lib/utils"
 
 // Sorting function - folders first, then alphabetical
 export const sortItems = (items: FileSystemItem[]): FileSystemItem[] => {
@@ -152,7 +153,7 @@ export const findItemAndParent = (
 
 export const deepCopyItem = (item: FileSystemItem): FileSystemItem => {
   const newItem: FileSystemItem = {
-    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    id: generateId("fs"),
     name: item.name, // Name will be updated for root item only
     type: item.type,
     expanded: false, // Reset expansion state for duplicated items

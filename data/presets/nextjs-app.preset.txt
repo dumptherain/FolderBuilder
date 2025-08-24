@@ -1,0 +1,15 @@
+root: my-nextjs-app
+category: Web Development
+description: Next.js application with app router structure
+
+app/
+  globals.css
+  layout.tsx
+  page.tsx
+components/
+  ui/
+lib/
+public/
+  images/
+  videos/
+package.json

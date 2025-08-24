@@ -1,0 +1,21 @@
+root: my-api-server
+category: Backend Development
+description: Express.js API server with MVC structure
+
+src/
+  controllers/
+  middleware/
+  models/
+  routes/
+  services/
+  utils/
+  app.js
+  server.js
+tests/
+  unit/
+  integration/
+configs/
+  dev/
+  prod/
+package.json
+README.md

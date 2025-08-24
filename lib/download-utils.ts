@@ -1,4 +1,5 @@
 import type { FileSystemItem } from "@/types/folder"
+import { toast } from "@/hooks/use-toast"
 
 // File System Access API approach (modern browsers)
 export const downloadAsFolder = async (
@@ -6,7 +7,11 @@ export const downloadAsFolder = async (
   setIsDownloading: (loading: boolean) => void,
 ): Promise<void> => {
   if (!("showDirectoryPicker" in window)) {
-    alert("Your browser doesn't support direct folder creation. Please use the ZIP download instead.")
+    toast({
+      title: "Not supported",
+      description: "Your browser doesn't support creating folders. Use ZIP download instead.",
+      variant: "destructive",
+    })
     return
   }
 
@@ -50,14 +55,14 @@ export const downloadAsFolder = async (
       await createStructure(fileSystem[0].children, rootHandle)
     }
 
-    alert(`Folder structure "${rootFolderName}" created successfully!`)
+    toast({ title: "Folder created", description: `Created \"${rootFolderName}\" successfully.` })
   } catch (error) {
     if ((error as Error).name === "AbortError") {
       // User cancelled the directory picker
       return
     }
     console.error("Error creating folder structure:", error)
-    alert("Error creating folder structure. Your browser might not support this feature.")
+    toast({ title: "Creation failed", description: "Could not create folder structure.", variant: "destructive" })
   } finally {
     setIsDownloading(false)
   }
@@ -104,6 +109,6 @@ export const downloadAsZip = async (fileSystem: FileSystemItem[]): Promise<void>
     URL.revokeObjectURL(url)
   } catch (error) {
     console.error("Error creating zip file:", error)
-    alert("Error creating folder structure. Please try again.")
+    toast({ title: "ZIP failed", description: "Could not create ZIP. Please try again.", variant: "destructive" })
   }
 }

@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Loader2, Clock } from "lucide-react"
 import type { FileSystemItem } from "@/types/folder"
 import { convertToPresetFormat } from "@/lib/preset-utils"
+import { serializeIndentedPreset } from "@/lib/preset-text"
 import { saveTemporaryPreset, generateTemporaryPresetValue, getTemporaryPresets } from "@/lib/temporary-preset-manager"
 import { useToast } from "@/hooks/use-toast"
 
@@ -44,6 +45,8 @@ export function SavePresetDialog({ open, onOpenChange, fileSystem, onPresetSaved
   const [category, setCategory] = useState("Temporary")
   const [rootName, setRootName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [presetText, setPresetText] = useState("")
   const { toast } = useToast()
 
   const handleSave = async () => {
@@ -112,6 +115,7 @@ export function SavePresetDialog({ open, onOpenChange, fileSystem, onPresetSaved
       setCategory("Temporary")
       setRootName("")
       onOpenChange(false)
+      setPresetText("")
     } catch (error) {
       console.error("Failed to save preset:", error)
       toast({
@@ -133,6 +137,7 @@ export function SavePresetDialog({ open, onOpenChange, fileSystem, onPresetSaved
         setDescription("")
         setCategory("Temporary")
         setRootName("")
+        setPresetText("")
       }
     }
   }
@@ -256,11 +261,37 @@ export function SavePresetDialog({ open, onOpenChange, fileSystem, onPresetSaved
                   </div>
                 )}
               </div>
+              <div className="mt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      const txt = serializeIndentedPreset(
+                        rootName || "my-project",
+                        fileSystem[0]?.children || [],
+                        { category, description }
+                      )
+                      setPresetText(txt)
+                      setAdvancedOpen(true)
+                    } catch {}
+                  }}
+                  className="h-7 px-2 text-xs"
+                >
+                  View as text
+                </Button>
+              </div>
             </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex flex-col gap-2">
+          {advancedOpen && (
+            <div className="w-full">
+              <Label>Preset text (indented)</Label>
+              <Textarea value={presetText} onChange={(e) => setPresetText(e.target.value)} rows={8} />
+            </div>
+          )}
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>

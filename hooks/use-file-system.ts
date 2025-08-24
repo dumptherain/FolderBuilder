@@ -4,6 +4,7 @@ import { useState, useCallback } from "react"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { useToast } from "@/hooks/use-toast"
 import { sortItems, deepClone, findItemAndParent, generateIncrementedName, deepCopyItem } from "@/lib/folder-utils"
+import { generateId } from "@/lib/utils"
 import type { FileSystemItem } from "@/types/folder"
 
 interface HistoryState {
@@ -268,7 +269,7 @@ export function useFileSystem() {
       if (!name.trim()) return
 
       const newItem: FileSystemItem = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        id: generateId("fs"),
         name: name.trim(),
         type,
         children: type === "folder" ? [] : undefined,
@@ -288,7 +289,7 @@ export function useFileSystem() {
         return sortItems(
           items.map((item) => ({
             ...item,
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            id: generateId("fs"),
             children: item.children ? assignIds(item.children) : undefined,
             expanded: false,
           })),

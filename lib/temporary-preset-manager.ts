@@ -144,7 +144,7 @@ export const exportTemporaryPresets = (): string => {
 }
 
 // Download temporary presets as JSON file
-export const downloadTemporaryPresets = (): void => {
+export const downloadTemporaryPresets = (): number => {
   try {
     const presets = getTemporaryPresets()
     const presetsCount = Object.keys(presets).length
@@ -165,6 +165,7 @@ export const downloadTemporaryPresets = (): void => {
     document.body.removeChild(link)
 
     URL.revokeObjectURL(url)
+    return presetsCount
   } catch (error) {
     console.error("Failed to download temporary presets:", error)
     throw error

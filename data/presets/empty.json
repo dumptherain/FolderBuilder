@@ -1,8 +1,0 @@
-{
-  "value": "empty-root",
-  "label": "Root Folder Only",
-  "category": "Minimal",
-  "description": "Creates a single root folder with no content",
-  "rootName": "root",
-  "structure": []
-}
