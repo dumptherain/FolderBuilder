@@ -148,7 +148,13 @@ export function PresetImportExportButtons({ onPresetsChanged }: PresetImportExpo
         </div>
       </div>
 
-      <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileSelect} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.txt,.preset.txt"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
 
       <AlertDialog open={showMergeDialog} onOpenChange={setShowMergeDialog}>
         <AlertDialogContent>

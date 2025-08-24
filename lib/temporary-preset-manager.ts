@@ -1,4 +1,5 @@
 import type { FolderPreset } from "@/types/folder"
+import { parseIndentedPreset } from "@/lib/preset-text"
 
 // Temporary preset storage key
 const TEMP_PRESETS_KEY = "temporary-presets"
@@ -144,32 +145,64 @@ export const exportTemporaryPresets = (): string => {
 }
 
 // Download temporary presets as JSON file
-export const downloadTemporaryPresets = (): number => {
+export const downloadTemporaryPresets = async (): Promise<number> => {
   try {
     const presets = getTemporaryPresets()
-    const presetsCount = Object.keys(presets).length
+    const entries = Object.entries(presets)
+    const presetsCount = entries.length
 
     if (presetsCount === 0) {
       throw new Error("No temporary presets to download")
     }
 
-    const jsonString = JSON.stringify(presets, null, 2)
-    const blob = new Blob([jsonString], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
+    // Create a ZIP of .preset.txt files
+    const JSZip = (await import("jszip")).default
+    const zip = new JSZip()
 
+    for (const [, preset] of entries) {
+      const text = serializePresetAsText(preset)
+      const safeName = `${preset.value || preset.label || "preset"}.preset.txt`
+      zip.file(safeName, text)
+    }
+
+    const blob = await zip.generateAsync({ type: "blob" })
+    const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `temporary-presets-${new Date().toISOString().split("T")[0]}.json`
+    link.download = `temporary-presets-${new Date().toISOString().split("T")[0]}.zip`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
     URL.revokeObjectURL(url)
+
     return presetsCount
   } catch (error) {
     console.error("Failed to download temporary presets:", error)
     throw error
   }
+}
+
+function serializePresetAsText(preset: FolderPreset): string {
+  // The temp preset structure matches FolderPreset (structure missing ids); wrap into text
+  const items: any[] = Array.isArray((preset as any).structure) ? (preset as any).structure : []
+  const lines: string[] = []
+  if (preset.rootName) lines.push(`root: ${preset.rootName}`)
+  if (preset.category) lines.push(`category: ${preset.category}`)
+  if (preset.description) lines.push(`description: ${preset.description}`)
+  if (lines.length) lines.push("")
+  const walk = (arr: any[], depth: number) => {
+    for (const it of arr) {
+      const indent = "  ".repeat(depth)
+      if (it.type === "folder") {
+        lines.push(`${indent}${it.name}/`)
+        if (Array.isArray(it.children) && it.children.length) walk(it.children, depth + 1)
+      } else {
+        lines.push(`${indent}${it.name}`)
+      }
+    }
+  }
+  walk(items, 0)
+  return lines.join("\n") + "\n"
 }
 
 // Import temporary presets from JSON string
@@ -216,8 +249,19 @@ export const uploadTemporaryPresets = (file: File, mergeMode = false): Promise<n
 
     reader.onload = (event) => {
       try {
-        const jsonData = event.target?.result as string
-        const importedCount = importTemporaryPresets(jsonData, mergeMode)
+        const content = (event.target?.result as string) || ""
+        const name = file.name.toLowerCase()
+        // If preset text file, parse a single preset
+        if (name.endsWith(".preset.txt") || name.endsWith(".txt") || content.trim().startsWith("root:")) {
+          const preset = parseIndentedPreset(content)
+          // Save directly; mergeMode irrelevant for single preset
+          saveTemporaryPreset(preset)
+          resolve(1)
+          return
+        }
+
+        // Otherwise treat as JSON bundle
+        const importedCount = importTemporaryPresets(content, mergeMode)
         resolve(importedCount)
       } catch (error) {
         reject(error)
